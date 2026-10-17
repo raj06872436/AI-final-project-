@@ -1,0 +1,564 @@
+<title>Temporal Fraud Detection</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: single reading column (max 1080px), sections as numbered report chapters, demo as a two-pane instrument panel */
+:root{
+  --bg:#f5f7fb; --surface:#ffffff; --ink:#141a2b; --muted:#5b6478; --line:#dfe3ec;
+  --accent:#2747d6; --accent-soft:#e6ebff; --fraud:#c7362f; --fraud-soft:#fbe7e5; --ok:#1f8a5b; --ok-soft:#e1f4ea; --warn:#a86a00;
+  --display:"Archivo",system-ui,sans-serif; --body:"IBM Plex Sans",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0e1220; --surface:#161b2c; --ink:#e7eaf3; --muted:#9aa3b8; --line:#2a3148;
+  --accent:#8199ff; --accent-soft:#1f2850; --fraud:#ff7a70; --fraud-soft:#3a1d1f; --ok:#4fd18f; --ok-soft:#14301f; --warn:#e8b14a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1220; --surface:#161b2c; --ink:#e7eaf3; --muted:#9aa3b8; --line:#2a3148;
+  --accent:#8199ff; --accent-soft:#1f2850; --fraud:#ff7a70; --fraud-soft:#3a1d1f; --ok:#4fd18f; --ok-soft:#14301f; --warn:#e8b14a; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.6}
+.wrap{max-width:1080px;margin:0 auto;padding-block:32px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:56px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;line-height:1.15}
+h1{font-size:clamp(28px,5vw,46px);font-weight:800;letter-spacing:-.02em}
+h2{font-size:26px;font-weight:700;display:flex;gap:12px;align-items:baseline}
+h2 .n{font-family:var(--mono);font-size:14px;color:var(--accent);font-weight:500}
+h3{font-size:17px;font-weight:700}
+p{margin:0;max-width:70ch}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.mono,.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+section{display:flex;flex-direction:column;gap:18px}
+.lede{font-size:17px;color:var(--muted)}
+.hero{display:flex;flex-direction:column;gap:16px;border-bottom:1px solid var(--line);padding-bottom:28px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.stat{background:var(--surface);padding:14px 16px;display:flex;flex-direction:column;gap:2px}
+.stat b{font-family:var(--mono);font-size:22px;font-weight:500}
+.stat span{font-size:12.5px;color:var(--muted)}
+.stat.alert b{color:var(--fraud)}
+.pipeline{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.step{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-size:13.5px}
+.step.key{border-color:var(--accent);background:var(--accent-soft)}
+.arrow{color:var(--muted);font-family:var(--mono)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px;display:flex;flex-direction:column;gap:18px}
+.controls{display:flex;flex-wrap:wrap;gap:18px 28px;align-items:end}
+.ctl{display:flex;flex-direction:column;gap:4px;min-width:180px;flex:1}
+.ctl label{font-size:12.5px;color:var(--muted)}
+.ctl output{font-family:var(--mono);color:var(--ink)}
+input[type=range]{width:100%;accent-color:var(--accent)}
+button{font:inherit;font-weight:600;background:var(--accent);color:#fff;border:0;border-radius:8px;padding:9px 16px;cursor:pointer}
+button.ghost{background:transparent;color:var(--accent);border:1px solid var(--accent)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600}
+td.num{text-align:right} th.r{text-align:right}
+tr.best td{background:var(--accent-soft)}
+.pill{display:inline-block;font-size:11.5px;padding:2px 8px;border-radius:99px;font-weight:600;font-family:var(--mono)}
+.pill.ok{background:var(--ok-soft);color:var(--ok)} .pill.bad{background:var(--fraud-soft);color:var(--fraud)} .pill.mid{background:var(--accent-soft);color:var(--accent)}
+.cm{display:grid;grid-template-columns:auto 1fr 1fr;gap:4px;font-size:13px}
+.cm div{padding:10px;border-radius:6px;text-align:center}
+.cm .h{color:var(--muted);font-size:12px;padding:4px}
+.cm .tp{background:var(--ok-soft);color:var(--ok)} .cm .tn{background:var(--ok-soft);color:var(--ok)}
+.cm .fp{background:var(--fraud-soft);color:var(--fraud)} .cm .fn{background:var(--fraud-soft);color:var(--fraud)}
+.cm b{display:block;font-family:var(--mono);font-size:20px}
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.metric{border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.metric span{font-size:11.5px;color:var(--muted);display:block}
+.metric b{font-family:var(--mono);font-size:18px;font-weight:500}
+svg text{fill:var(--muted);font-family:var(--mono);font-size:10px}
+.bars{display:flex;flex-direction:column;gap:6px}
+.bar{display:grid;grid-template-columns:130px 1fr 54px;gap:10px;align-items:center;font-size:13px}
+.bar .track{height:14px;background:var(--bg);border-radius:4px;position:relative;overflow:hidden}
+.bar .fill{position:absolute;top:0;bottom:0;background:var(--accent);border-radius:4px}
+.bar .fill.neg{background:var(--ok)} .bar .fill.pos{background:var(--fraud)}
+.bar .v{font-family:var(--mono);text-align:right;font-size:12.5px}
+.note{font-size:13px;color:var(--muted)}
+.callout{border-left:3px solid var(--accent);padding:4px 0 4px 14px;color:var(--ink)}
+details{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 16px}
+details summary{cursor:pointer;font-weight:600}
+details p{margin-top:8px;color:var(--muted)}
+.qa{display:flex;flex-direction:column;gap:8px}
+ul{margin:0;padding-left:20px} li{margin:3px 0}
+@media (max-width:760px){.grid2,.grid3{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}.metrics{grid-template-columns:repeat(2,1fr)}.bar{grid-template-columns:100px 1fr 48px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+
+<header class="hero">
+  <div class="eyebrow">AI Laboratory · T.Y. B.Tech Information Technology · Research Project</div>
+  <h1>Temporal and Explainable Machine Learning for Early Financial Fraud Detection</h1>
+  <p class="lede">A leakage-free comparison of transaction-level, temporal and behavioral models. This page walks through the problem, the method, a working in-browser prototype, the verified benchmark results and the research plan.</p>
+  <div class="stats">
+    <div class="stat"><b>284,807</b><span>transactions in ULB European dataset</span></div>
+    <div class="stat alert"><b>492</b><span>fraud cases</span></div>
+    <div class="stat alert"><b>0.172%</b><span>fraud rate (severe imbalance)</span></div>
+    <div class="stat"><b>0.8016</b><span>best verified PR-AUC (SMOTE-RF)</span></div>
+  </div>
+</header>
+
+<section>
+  <h2><span class="n">01</span>Problem and why it is hard</h2>
+  <p><b>Problem statement.</b> Develop and evaluate a leakage-free ML framework for financial fraud detection that compares transaction-level models with temporal and behavioral models, and explains individual fraud predictions.</p>
+  <div class="grid3">
+    <div class="card"><h3>Class imbalance</h3><p class="note">Only 0.172% of transactions are fraud. A model that says "legitimate" for everything scores <b class="mono">99.83%</b> accuracy and catches zero fraud. We use PR-AUC, precision, recall and F1 instead.</p></div>
+    <div class="card"><h3>Temporal behavior</h3><p class="note">Transactions arrive as a stream. Gap since the previous transaction, recent count and deviation from the card's normal amount carry signal that a single row does not.</p></div>
+    <div class="card"><h3>Evaluation leakage</h3><p class="note">A random split trains on the future and tests on the past. A chronological split (train on early data, test on later) matches real deployment.</p></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="n">02</span>Pipeline</h2>
+  <div class="pipeline">
+    <span class="step">Raw transactions</span><span class="arrow">→</span>
+    <span class="step">Dataset audit + duplicate removal</span><span class="arrow">→</span>
+    <span class="step key">Chronological split 60/20/20</span><span class="arrow">→</span>
+    <span class="step key">Train-only preprocessing</span><span class="arrow">→</span>
+    <span class="step">Static + temporal features</span><span class="arrow">→</span>
+    <span class="step">LR / RF / XGBoost / LightGBM</span><span class="arrow">→</span>
+    <span class="step">LSTM / GRU (where sequences valid)</span><span class="arrow">→</span>
+    <span class="step key">Threshold tuned on validation</span><span class="arrow">→</span>
+    <span class="step">SHAP explanations</span><span class="arrow">→</span>
+    <span class="step">Metrics, drift and ablation</span>
+  </div>
+  <div class="card">
+    <h3>Leakage rules followed</h3>
+    <ul class="note">
+      <li>Scaler, feature selector and SMOTE are fit on training data only.</li>
+      <li>Decision threshold is chosen on validation data, never on test.</li>
+      <li>Temporal features use only transactions that happened before the current one.</li>
+      <li>The test period is evaluated once, after model selection is finished.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="demo">
+  <h2><span class="n">03</span>Live prototype</h2>
+  <p>This runs in your browser. It generates a 48-hour stream of 20,000 card transactions with injected fraud bursts and concept drift, builds leakage-safe temporal features, trains logistic regression on the earliest 60%, tunes the threshold on the next 20% and tests once on the final 20%. <span class="note">Synthetic data, used to demonstrate the method. Real-dataset code is in <span class="mono">fraud_pipeline.py</span>.</span></p>
+  <div class="panel">
+    <div class="controls">
+      <div class="ctl"><label for="drift">Concept drift (how much the fraud signature fades over time) <output id="driftV">0.6</output></label><input id="drift" type="range" min="0" max="1" step="0.1" value="0.6"></div>
+      <div class="ctl"><label for="rate">Base fraud rate <output id="rateV">0.6%</output></label><input id="rate" type="range" min="0.002" max="0.02" step="0.001" value="0.006"></div>
+      <button id="run">Generate data and train</button>
+    </div>
+    <div id="status" class="note mono">Training…</div>
+
+    <h3>Experiment table (test period, threshold tuned on validation)</h3>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Exp</th><th>Features</th><th>Split</th><th class="r">PR-AUC</th><th class="r">ROC-AUC</th><th class="r">Precision</th><th class="r">Recall</th><th class="r">F1</th><th>Reading</th></tr></thead>
+      <tbody id="expBody"></tbody>
+    </table></div>
+    <p class="note callout" id="expNote"></p>
+
+    <div class="grid2">
+      <div class="card">
+        <h3>Decision threshold on the test period</h3>
+        <div class="ctl"><label for="th">Threshold <output id="thV"></output> <span id="thTag" class="pill mid">tuned on validation</span></label><input id="th" type="range" min="0.01" max="0.99" step="0.01" value="0.5"></div>
+        <div class="cm">
+          <div class="h"></div><div class="h">Predicted fraud</div><div class="h">Predicted legit</div>
+          <div class="h">Actual fraud</div><div class="tp"><b id="cTP"></b>caught (TP)</div><div class="fn"><b id="cFN"></b>missed (FN)</div>
+          <div class="h">Actual legit</div><div class="fp"><b id="cFP"></b>false alarms (FP)</div><div class="tn"><b id="cTN"></b>correct (TN)</div>
+        </div>
+        <div class="metrics">
+          <div class="metric"><span>Precision</span><b id="mP"></b></div>
+          <div class="metric"><span>Recall</span><b id="mR"></b></div>
+          <div class="metric"><span>F1</span><b id="mF"></b></div>
+          <div class="metric"><span>Accuracy</span><b id="mA"></b></div>
+        </div>
+        <p class="note">Move the slider: lower threshold catches more fraud but raises false alarms. Accuracy barely moves, which is why it is not used for model selection.</p>
+      </div>
+      <div class="card">
+        <h3>Precision–recall curve</h3>
+        <svg id="pr" viewBox="0 0 340 260" width="100%" role="img" aria-label="Precision recall curve"></svg>
+        <p class="note"><span style="color:var(--accent)">■</span> static + temporal &nbsp; <span style="color:var(--muted)">■</span> static only &nbsp; ● current threshold</p>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <h3>Global explanation: learned weights</h3>
+        <div id="global" class="bars"></div>
+        <p class="note">Standardized logistic-regression coefficients. Red pushes toward fraud, green toward legitimate. In the Python version, SHAP plays this role for tree models.</p>
+      </div>
+      <div class="card">
+        <h3>Local explanation: one flagged transaction</h3>
+        <div class="note mono" id="txInfo"></div>
+        <div id="local" class="bars"></div>
+        <button class="ghost" id="nextTx">Show next flagged transaction</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="n">04</span>Verified benchmark results (ULB dataset)</h2>
+  <p>Public, reproducible 2026 benchmark runs on the real dataset. These are reported as external benchmark evidence, not as a fresh training run of this project.</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Model</th><th class="r">Precision</th><th class="r">Recall</th><th class="r">F1</th><th class="r">ROC-AUC</th><th class="r">PR-AUC</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td>Logistic Regression</td><td class="num">83.95%</td><td class="num">71.58%</td><td class="num">0.7727</td><td class="num">0.9558</td><td class="num">0.6939</td><td><span class="pill ok">verified</span></td></tr>
+      <tr><td>SMOTE Logistic Regression</td><td class="num">88.46%</td><td class="num">72.63%</td><td class="num">0.7977</td><td class="num">0.9582</td><td class="num">0.7179</td><td><span class="pill ok">verified</span></td></tr>
+      <tr><td>Random Forest</td><td class="num">89.87%</td><td class="num">74.74%</td><td class="num">0.8161</td><td class="num">0.9189</td><td class="num">0.7983</td><td><span class="pill ok">verified</span></td></tr>
+      <tr class="best"><td>SMOTE Random Forest</td><td class="num">92.00%</td><td class="num">72.63%</td><td class="num">0.8118</td><td class="num">0.9598</td><td class="num">0.8016</td><td><span class="pill ok">verified</span></td></tr>
+      <tr><td>MLP</td><td class="num">82.76%</td><td class="num">75.79%</td><td class="num">0.7912</td><td class="num">0.9365</td><td class="num">0.6838</td><td><span class="pill ok">verified</span></td></tr>
+      <tr><td>XGBoost (time-ordered)</td><td class="num">93.00%</td><td class="num">71.60%</td><td class="num">0.8090</td><td class="num">0.9840</td><td class="num">0.7940</td><td><span class="pill ok">verified</span></td></tr>
+      <tr><td>LightGBM</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td><span class="pill mid">to reproduce</span></td></tr>
+      <tr><td>LSTM / GRU</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td><span class="pill mid">needs entity sequences</span></td></tr>
+    </tbody>
+  </table></div>
+  <div class="grid2">
+    <div class="card">
+      <h3>PR-AUC by model</h3>
+      <div class="bars" id="benchBars"></div>
+      <p class="note">PR-AUC is the primary metric because fraud is so rare. Note how Random Forest has the lowest ROC-AUC but one of the highest PR-AUC values.</p>
+    </div>
+    <div class="card">
+      <h3>SMOTE-RF confusion matrix (test set, 56,746 rows)</h3>
+      <div class="cm">
+        <div class="h"></div><div class="h">Predicted fraud</div><div class="h">Predicted legit</div>
+        <div class="h">Actual fraud</div><div class="tp"><b>69</b>TP</div><div class="fn"><b>26</b>FN</div>
+        <div class="h">Actual legit</div><div class="fp"><b>6</b>FP</div><div class="tn"><b>56,645</b>TN</div>
+      </div>
+      <p class="note">69 of 95 frauds caught with only 6 false alarms. Recall 0.7263, precision 0.9200.</p>
+    </div>
+  </div>
+  <div class="card">
+    <h3>Temporal stability (70/15/15 chronological benchmark)</h3>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Model</th><th class="r">Validation AP</th><th class="r">Validation ROC-AUC</th><th class="r">AP drop on future data</th><th class="r">AUC drop</th></tr></thead>
+      <tbody>
+        <tr><td>Logistic Regression</td><td class="num">0.7795</td><td class="num">0.9727</td><td class="num">0.4882</td><td class="num">0.0406</td></tr>
+        <tr><td>Random Forest</td><td class="num">0.7815</td><td class="num">0.9314</td><td class="num">0.3570</td><td class="num">0.1028</td></tr>
+        <tr class="best"><td>XGBoost</td><td class="num">0.7782</td><td class="num">0.9859</td><td class="num">0.2926</td><td class="num">0.0057</td></tr>
+      </tbody>
+    </table></div>
+    <p class="note">XGBoost degraded the least on future data. Top SHAP features reported for XGBoost: V14, V4, V12, V10, V11.</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="n">05</span>Hypotheses</h2>
+  <div class="tablewrap"><table>
+    <thead><tr><th>#</th><th>Hypothesis</th><th>Evidence so far</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">H1</td><td style="white-space:normal">Leakage-safe temporal features improve PR-AUC / recall over static features.</td><td><span class="pill ok">supported in prototype</span></td></tr>
+      <tr><td class="mono">H2</td><td style="white-space:normal">LSTM/GRU add value when valid entity histories exist.</td><td><span class="pill mid">planned (IEEE-CIS)</span></td></tr>
+      <tr><td class="mono">H3</td><td style="white-space:normal">Chronological evaluation shows more degradation than random evaluation.</td><td><span class="pill ok">supported (benchmark + prototype)</span></td></tr>
+      <tr><td class="mono">H4</td><td style="white-space:normal">PR-AUC is a better selection signal than accuracy or ROC-AUC.</td><td><span class="pill ok">supported (RF: low ROC, high PR)</span></td></tr>
+      <tr><td class="mono">H5</td><td style="white-space:normal">Best model by AUC is not always best at a practical false-positive limit.</td><td><span class="pill ok">supported</span></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section>
+  <h2><span class="n">06</span>Datasets, models and imbalance handling</h2>
+  <div class="grid2">
+    <div class="card">
+      <h3>Datasets</h3>
+      <div class="tablewrap"><table>
+        <thead><tr><th></th><th>ULB European CC</th><th>IEEE-CIS</th></tr></thead>
+        <tbody>
+          <tr><td>Rows</td><td class="mono">284,807</td><td class="mono">590,540</td></tr>
+          <tr><td>Fraud</td><td class="mono">492 (0.172%)</td><td class="mono">20,663 (~3.5%)</td></tr>
+          <tr><td>Features</td><td>Time, V1–V28 (PCA), Amount</td><td>Card, device, email, address</td></tr>
+          <tr><td>Role</td><td>Primary benchmark</td><td>Behavioral / sequence validation</td></tr>
+        </tbody>
+      </table></div>
+      <p class="note">ULB has no card IDs, so true per-card sequences are built on IEEE-CIS rather than faked from row order.</p>
+    </div>
+    <div class="card">
+      <h3>Models compared</h3>
+      <ul class="note">
+        <li><b>Logistic Regression</b> — simple, interpretable linear baseline.</li>
+        <li><b>Random Forest</b> — strong nonlinear tree ensemble.</li>
+        <li><b>XGBoost / LightGBM</b> — gradient boosting, best for tabular data.</li>
+        <li><b>MLP</b> — neural tabular baseline.</li>
+        <li><b>LSTM / GRU</b> — read the last k transactions of a card as a sequence.</li>
+      </ul>
+      <h3>Imbalance strategies</h3>
+      <ul class="note">
+        <li>Class weighting (used in the prototype)</li>
+        <li>SMOTE, applied inside the training fold only</li>
+        <li>Undersampling</li>
+        <li>Threshold tuning on validation data</li>
+      </ul>
+    </div>
+  </div>
+  <div class="card">
+    <h3>Features</h3>
+    <div class="grid3">
+      <div><b>Static</b><ul class="note"><li>V1–V28</li><li>Amount, log amount</li><li>Hour of day</li></ul></div>
+      <div><b>Temporal</b><ul class="note"><li>Time since previous transaction</li><li>Count in last 1 hour</li><li>Rolling mean / std of amount</li><li>Deviation from recent behavior</li></ul></div>
+      <div><b>Behavioral</b> (needs IDs)<ul class="note"><li>Card-level average amount</li><li>Device / email / address change</li><li>Amount z-score vs history</li></ul></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="n">07</span>Metrics</h2>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Metric</th><th>Formula</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td>Precision</td><td class="mono">TP / (TP + FP)</td><td>Share of alerts that are really fraud</td></tr>
+      <tr><td>Recall</td><td class="mono">TP / (TP + FN)</td><td>Share of fraud that was caught</td></tr>
+      <tr><td>F1</td><td class="mono">2PR / (P + R)</td><td>Balance of precision and recall</td></tr>
+      <tr><td>PR-AUC</td><td class="mono">area under P–R curve</td><td>Primary metric under imbalance</td></tr>
+      <tr><td>ROC-AUC</td><td class="mono">area under TPR–FPR</td><td>Secondary; can look high even with weak precision</td></tr>
+      <tr><td>FPR</td><td class="mono">FP / (FP + TN)</td><td>Rate of wrongly flagged customers</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section>
+  <h2><span class="n">08</span>Limitations, ethics and future work</h2>
+  <div class="grid3">
+    <div class="card"><h3>Limitations</h3><ul class="note"><li>ULB features are anonymized PCA components.</li><li>Only 2 days of data, so long-term drift is limited.</li><li>No customer IDs on ULB.</li><li>Benchmarks come from different pipelines.</li><li>SHAP shows attribution, not causality.</li></ul></div>
+    <div class="card"><h3>Ethics</h3><ul class="note"><li>False positives block real customers.</li><li>The model supports a human reviewer and does not decide alone.</li><li>Public anonymized data only.</li></ul></div>
+    <div class="card"><h3>Future work</h3><ul class="note"><li>Temporal graph neural networks</li><li>Transformer sequence models</li><li>Online learning for drift</li><li>Cost-sensitive learning</li><li>Federated, privacy-preserving training</li></ul></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="n">09</span>Viva quick answers</h2>
+  <div class="qa">
+    <details><summary>Why not use accuracy?</summary><p>With 0.172% fraud, predicting "legit" for everything gives 99.83% accuracy and catches nothing. PR-AUC, recall and precision focus on the rare fraud class.</p></details>
+    <details><summary>What is data leakage here?</summary><p>Any information from validation/test or from the future reaching training: random splits that train on later transactions, fitting the scaler or SMOTE on all data, or choosing the threshold on the test set.</p></details>
+    <details><summary>Why apply SMOTE only after splitting?</summary><p>SMOTE makes synthetic frauds by interpolating between real ones. If done before the split, synthetic points built from test frauds leak into training and inflate results.</p></details>
+    <details><summary>Why is PR-AUC better than ROC-AUC here?</summary><p>ROC-AUC uses the false positive rate, whose denominator is the huge number of legitimate transactions, so many false alarms still look small. PR-AUC uses precision, which directly shows how many alerts are false.</p></details>
+    <details><summary>Why not just use 0.5 as threshold?</summary><p>Probabilities are skewed under imbalance and the right threshold depends on business cost (review capacity vs missed fraud). We tune it on validation data. The XGBoost benchmark selected 0.266.</p></details>
+    <details><summary>What is SHAP?</summary><p>SHapley Additive exPlanations: game-theory based attribution that splits a prediction into contributions from each feature. Global view: which features matter overall. Local view: why this one transaction was flagged.</p></details>
+    <details><summary>Why LSTM/GRU, and why not on ULB?</summary><p>They learn from ordered sequences such as the last k transactions of the same card. ULB has no card IDs, so valid sequences are built on IEEE-CIS. GRU is a lighter version of LSTM with fewer gates.</p></details>
+    <details><summary>What is concept drift?</summary><p>Fraud patterns and customer behavior change over time, so a model trained on old data degrades. We test it by evaluating early, middle and late windows separately. Try the drift slider in the prototype.</p></details>
+    <details><summary>What is your contribution if temporal fraud detection already exists?</summary><p>A controlled, reproducible comparison that measures how much temporal and behavioral information adds over strong baselines, under strict leakage-free chronological evaluation, with explainability and false-positive constraints.</p></details>
+  </div>
+</section>
+
+<footer class="note">Tech stack: Python, pandas, NumPy, scikit-learn, imbalanced-learn, XGBoost, LightGBM, PyTorch, SHAP, Matplotlib, Streamlit. References: Dal Pozzolo et al. 2015; Lundberg &amp; Lee 2017; Motie &amp; Raahemi 2024; Tong &amp; Shen 2023; ULB and IEEE-CIS datasets.</footer>
+</div>
+
+<script>
+// Fraud detection engine: synthetic transactions, leakage-free features,
+// chronological vs random splits, logistic regression, metrics.
+const Engine = (() => {
+  function rng(seed) {
+    return function () {
+      seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
+      let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function gauss(r) {
+    let u = 0; while (u === 0) u = r();
+    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * r());
+  }
+
+  const STATIC = ["log_amount", "V14", "V4", "V12"];
+  const TEMPORAL = ["log_gap_prev", "txn_count_1h", "amount_zscore"];
+
+  // Generate a 48-hour transaction stream. Temporal features use ONLY past
+  // transactions of the same card (no look-ahead leakage).
+  function generate(seed, n, fraudRate, drift) {
+    const r = rng(seed), C = 1200, SPAN = 172800;
+    const cards = Array.from({ length: C }, () => ({ mu: 3 + gauss(r) * 0.8, times: [], hist: [] }));
+    const rows = []; const bursts = []; let t = 0;
+    while (rows.length < n) {
+      t += -Math.log(1 - r()) * (SPAN / n);
+      let card, y;
+      if (bursts.length && bursts[0].at <= t) { card = bursts.shift().card; y = 1; }
+      else {
+        card = Math.floor(r() * C); y = r() < fraudRate ? 1 : 0;
+        if (y && r() < 0.6) {
+          const k = 1 + Math.floor(r() * 2);
+          for (let j = 0; j < k; j++) bursts.push({ card, at: t + 30 + r() * 600 });
+          bursts.sort((a, b) => a.at - b.at);
+        }
+      }
+      const c = cards[card], progress = t / SPAN;
+      const logAmt = y ? c.mu + 1.0 + gauss(r) * 0.8 : c.mu + gauss(r) * 0.5;
+      const sep = 2.4 * (1 - drift * progress);      // fraud signature fades: concept drift
+      const v14 = gauss(r) - (y ? sep : 0);
+      const v4 = gauss(r) + (y ? 0.9 : 0);
+      const v12 = gauss(r) - (y ? 0.5 : 0);
+      const last = c.times.length ? c.times[c.times.length - 1] : t - 86400;
+      let cnt = 0; for (let i = c.times.length - 1; i >= 0 && t - c.times[i] <= 3600; i--) cnt++;
+      const h = c.hist.slice(-10);
+      let z = 0;
+      if (h.length >= 2) {
+        const m = h.reduce((a, b) => a + b, 0) / h.length;
+        const s = Math.sqrt(h.reduce((a, b) => a + (b - m) ** 2, 0) / h.length);
+        z = (logAmt - m) / Math.max(s, 0.3);
+      }
+      rows.push({ id: rows.length, t, card, y, x: [logAmt, v14, v4, v12, Math.log1p(t - last), cnt, z] });
+      c.times.push(t); c.hist.push(logAmt);
+    }
+    return rows;
+  }
+
+  function split(rows, mode, seed) {
+    let idx = rows.map((_, i) => i);
+    if (mode === "random") {
+      const r = rng(seed + 99);
+      for (let i = idx.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [idx[i], idx[j]] = [idx[j], idx[i]]; }
+    }
+    const a = Math.floor(idx.length * 0.6), b = Math.floor(idx.length * 0.8);
+    const pick = (s) => s.map((i) => rows[i]);
+    return { train: pick(idx.slice(0, a)), val: pick(idx.slice(a, b)), test: pick(idx.slice(b)) };
+  }
+
+  // Logistic regression with balanced class weights; scaler fit on TRAIN only.
+  function trainLR(train, cols, iters = 300, lr = 0.3, l2 = 1e-3) {
+    const d = cols.length, n = train.length;
+    const mean = Array(d).fill(0), sd = Array(d).fill(0);
+    for (const r of train) cols.forEach((c, j) => (mean[j] += r.x[c] / n));
+    for (const r of train) cols.forEach((c, j) => (sd[j] += (r.x[c] - mean[j]) ** 2 / n));
+    for (let j = 0; j < d; j++) sd[j] = Math.sqrt(sd[j]) || 1;
+    const X = train.map((r) => cols.map((c, j) => (r.x[c] - mean[j]) / sd[j]));
+    const Y = train.map((r) => r.y);
+    const pos = Y.reduce((a, b) => a + b, 0), wPos = n / (2 * pos), wNeg = n / (2 * (n - pos));
+    const w = Array(d).fill(0); let b = 0;
+    for (let it = 0; it < iters; it++) {
+      const g = Array(d).fill(0); let gb = 0, W = 0;
+      for (let i = 0; i < n; i++) {
+        let s = b; for (let j = 0; j < d; j++) s += w[j] * X[i][j];
+        const p = 1 / (1 + Math.exp(-s)), wt = Y[i] ? wPos : wNeg, e = (p - Y[i]) * wt;
+        for (let j = 0; j < d; j++) g[j] += e * X[i][j];
+        gb += e; W += wt;
+      }
+      for (let j = 0; j < d; j++) w[j] -= lr * (g[j] / W + l2 * w[j]);
+      b -= lr * gb / W;
+    }
+    const z = (r) => cols.map((c, j) => (r.x[c] - mean[j]) / sd[j]);
+    const predict = (r) => { const v = z(r); let s = b; for (let j = 0; j < d; j++) s += w[j] * v[j]; return 1 / (1 + Math.exp(-s)); };
+    const explain = (r) => { const v = z(r); return cols.map((c, j) => w[j] * v[j]); };
+    return { w, b, cols, predict, explain };
+  }
+
+  function curves(scores, labels) {
+    const o = scores.map((s, i) => [s, labels[i]]).sort((a, b) => b[0] - a[0]);
+    const P = labels.reduce((a, b) => a + b, 0), N = labels.length - P;
+    let tp = 0, fp = 0, ap = 0; const pr = [{ r: 0, p: 1 }];
+    for (let i = 0; i < o.length; i++) {
+      if (o[i][1]) { tp++; ap += tp / (tp + fp); } else fp++;
+      if (i === o.length - 1 || o[i + 1][0] !== o[i][0]) pr.push({ r: tp / P, p: tp / (tp + fp) });
+    }
+    // ROC-AUC (Mann-Whitney)
+    const asc = o.slice().reverse(); let rankSum = 0;
+    for (let i = 0; i < asc.length;) {
+      let j = i; while (j < asc.length && asc[j][0] === asc[i][0]) j++;
+      const avg = (i + j + 1) / 2; for (let k = i; k < j; k++) if (asc[k][1]) rankSum += avg; i = j;
+    }
+    const roc = (rankSum - (P * (P + 1)) / 2) / (P * N);
+    return { prauc: ap / P, rocauc: roc, pr };
+  }
+
+  function confusion(scores, labels, th) {
+    let tp = 0, fp = 0, tn = 0, fn = 0;
+    scores.forEach((s, i) => { const p = s >= th; if (p && labels[i]) tp++; else if (p) fp++; else if (labels[i]) fn++; else tn++; });
+    const precision = tp + fp ? tp / (tp + fp) : 0, recall = tp + fn ? tp / (tp + fn) : 0;
+    const f1 = precision + recall ? (2 * precision * recall) / (precision + recall) : 0;
+    return { tp, fp, tn, fn, precision, recall, f1, fpr: fp / (fp + tn || 1), accuracy: (tp + tn) / scores.length };
+  }
+
+  function bestThreshold(scores, labels) {
+    let best = { th: 0.5, f1: -1 };
+    for (let th = 0.02; th < 1; th += 0.01) { const c = confusion(scores, labels, th); if (c.f1 > best.f1) best = { th, f1: c.f1 }; }
+    return best.th;
+  }
+
+  // Full experiment: model fit on train, threshold on validation, single test evaluation.
+  function experiment(rows, mode, cols, seed) {
+    const s = split(rows, mode, seed);
+    const m = trainLR(s.train, cols);
+    const vs = s.val.map(m.predict), vy = s.val.map((r) => r.y);
+    const th = bestThreshold(vs, vy);
+    const ts = s.test.map(m.predict), ty = s.test.map((r) => r.y);
+    return { model: m, split: s, th, scores: ts, labels: ty, ...curves(ts, ty), cm: confusion(ts, ty, th) };
+  }
+
+  return { generate, experiment, curves, confusion, STATIC, TEMPORAL, FEATURES: STATIC.concat(TEMPORAL) };
+})();
+if (typeof module !== "undefined") module.exports = Engine;
+
+</script>
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const fmt = (v, d = 3) => v.toFixed(d), pct = (v) => (v * 100).toFixed(1) + "%";
+  const S = [0, 1, 2, 3], ALL = [0, 1, 2, 3, 4, 5, 6];
+  let main, staticChrono, flagged = [], flagIdx = 0;
+
+  const bench = [["SMOTE RF", .8016], ["Random Forest", .7983], ["XGBoost", .794], ["SMOTE LR", .7179], ["Logistic Reg.", .6939], ["MLP", .6838]];
+  $("benchBars").innerHTML = bench.map(([n, v]) => `<div class="bar"><span>${n}</span><div class="track"><div class="fill" style="left:0;width:${v * 100}%"></div></div><span class="v">${v.toFixed(4)}</span></div>`).join("");
+
+  function run() {
+    $("status").textContent = "Training…";
+    setTimeout(() => {
+      const drift = +$("drift").value, rate = +$("rate").value, seed = 7;
+      const rows = Engine.generate(seed, 20000, rate, drift);
+      const nF = rows.filter((r) => r.y).length;
+      const exps = [
+        ["A", "Static", "Random", Engine.experiment(rows, "random", S, seed)],
+        ["B", "Static", "Chronological", Engine.experiment(rows, "chrono", S, seed)],
+        ["C", "Static + temporal", "Chronological", Engine.experiment(rows, "chrono", ALL, seed)],
+        ["D", "Static + temporal", "Random", Engine.experiment(rows, "random", ALL, seed)],
+      ];
+      staticChrono = exps[1][3]; main = exps[2][3];
+      const reading = { A: "optimistic (leaks future)", B: "honest baseline", C: "proposed model", D: "optimistic (leaks future)" };
+      $("expBody").innerHTML = exps.map(([k, f, s, e]) => `<tr class="${k === "C" ? "best" : ""}"><td class="mono">${k}</td><td>${f}</td><td>${s}</td><td class="num">${fmt(e.prauc)}</td><td class="num">${fmt(e.rocauc)}</td><td class="num">${fmt(e.cm.precision)}</td><td class="num">${fmt(e.cm.recall)}</td><td class="num">${fmt(e.cm.f1)}</td><td><span class="pill ${k === "C" ? "ok" : k === "B" ? "mid" : "bad"}">${reading[k]}</span></td></tr>`).join("");
+      const B = exps[1][3], C = exps[2][3], A = exps[0][3];
+      $("expNote").textContent = `H1: adding temporal features changes test PR-AUC from ${fmt(B.prauc)} to ${fmt(C.prauc)} (${C.prauc >= B.prauc ? "+" : ""}${fmt((C.prauc - B.prauc) / B.prauc * 100, 0)}%). H3: the same static model scores ${fmt(A.prauc)} on a random split vs ${fmt(B.prauc)} on a chronological split, so random splitting overstates performance when fraud patterns drift.`;
+      $("status").textContent = `${rows.length.toLocaleString()} transactions · ${nF} fraud (${pct(nF / rows.length)}) · train ${main.split.train.length.toLocaleString()} / val ${main.split.val.length.toLocaleString()} / test ${main.split.test.length.toLocaleString()} · tuned threshold ${main.th.toFixed(2)}`;
+      $("th").value = main.th.toFixed(2);
+      flagged = main.split.test.map((r, i) => ({ r, s: main.scores[i] })).filter((o) => o.r.y && o.s >= main.th).sort((a, b) => b.s - a.s);
+      flagIdx = 0;
+      drawGlobal(); drawLocal(); update();
+    }, 30);
+  }
+
+  function update() {
+    const th = +$("th").value; $("thV").textContent = th.toFixed(2);
+    $("thTag").hidden = Math.abs(th - main.th) > 0.005;
+    const c = Engine.confusion(main.scores, main.labels, th);
+    $("cTP").textContent = c.tp; $("cFN").textContent = c.fn; $("cFP").textContent = c.fp; $("cTN").textContent = c.tn.toLocaleString();
+    $("mP").textContent = fmt(c.precision); $("mR").textContent = fmt(c.recall); $("mF").textContent = fmt(c.f1); $("mA").textContent = pct(c.accuracy);
+    drawPR(c);
+  }
+
+  function drawPR(c) {
+    const W = 340, H = 260, L = 36, T = 10, R = 10, Bm = 30, w = W - L - R, h = H - T - Bm;
+    const x = (v) => L + v * w, y = (v) => T + (1 - v) * h;
+    let s = "";
+    for (let i = 0; i <= 4; i++) { const v = i / 4; s += `<line x1="${x(0)}" x2="${x(1)}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${L - 6}" y="${y(v) + 3}" text-anchor="end">${v.toFixed(2)}</text><text x="${x(v)}" y="${H - 14}" text-anchor="middle">${v.toFixed(2)}</text>`; }
+    s += `<text x="${L + w / 2}" y="${H - 2}" text-anchor="middle">Recall</text><text x="10" y="${T + h / 2}" text-anchor="middle" transform="rotate(-90 10 ${T + h / 2})">Precision</text>`;
+    const path = (pts) => pts.map((p, i) => `${i ? "L" : "M"}${x(p.r).toFixed(1)},${y(p.p).toFixed(1)}`).join("");
+    s += `<path d="${path(staticChrono.pr)}" fill="none" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="4 3"/>`;
+    s += `<path d="${path(main.pr)}" fill="none" stroke="var(--accent)" stroke-width="2"/>`;
+    s += `<circle cx="${x(c.recall)}" cy="${y(c.precision)}" r="5" fill="var(--fraud)" stroke="var(--surface)" stroke-width="2"/>`;
+    $("pr").innerHTML = s;
+  }
+
+  function bars(vals, names) {
+    const m = Math.max(...vals.map(Math.abs), 1e-6);
+    return vals.map((v, i) => { const wd = Math.abs(v) / m * 50; return `<div class="bar"><span class="mono">${names[i]}</span><div class="track"><div class="fill ${v > 0 ? "pos" : "neg"}" style="left:${v > 0 ? 50 : 50 - wd}%;width:${wd}%"></div></div><span class="v">${v >= 0 ? "+" : ""}${v.toFixed(2)}</span></div>`; }).join("");
+  }
+  function drawGlobal() { $("global").innerHTML = bars(main.model.w, Engine.FEATURES); }
+  function drawLocal() {
+    if (!flagged.length) { $("txInfo").textContent = "No fraud flagged at this threshold."; $("local").innerHTML = ""; return; }
+    const o = flagged[flagIdx % flagged.length], r = o.r;
+    const hh = Math.floor(r.t / 3600), mm = Math.floor((r.t % 3600) / 60);
+    $("txInfo").textContent = `Txn #${r.id} · card ${r.card} · hour ${hh}:${String(mm).padStart(2, "0")} · amount ${Math.exp(r.x[0]).toFixed(2)} · fraud score ${o.s.toFixed(3)} (${flagIdx % flagged.length + 1}/${flagged.length})`;
+    $("local").innerHTML = bars(main.model.explain(r), Engine.FEATURES);
+  }
+
+  $("drift").addEventListener("input", (e) => ($("driftV").textContent = e.target.value));
+  $("rate").addEventListener("input", (e) => ($("rateV").textContent = (e.target.value * 100).toFixed(1) + "%"));
+  $("run").addEventListener("click", run);
+  $("th").addEventListener("input", update);
+  $("nextTx").addEventListener("click", () => { flagIdx++; drawLocal(); });
+  run();
+})();
+</script>
