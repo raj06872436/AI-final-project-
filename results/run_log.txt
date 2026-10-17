@@ -1,0 +1,40 @@
+[    0.0s] Loading and auditing dataset
+[    3.2s]   raw 284,807 rows / 492 fraud; removed 1081 duplicates (19 fraud) -> 283,726 rows
+[    3.2s] Building static + past-only temporal features
+[    4.7s] Experiment 1: baseline models, static features, chronological split
+[    6.8s]   Logistic Regression          [static] PR-AUC 0.7447  ROC-AUC 0.9811  F1 0.7742
+[   11.8s]   SMOTE + Logistic Regression  [static] PR-AUC 0.7574  ROC-AUC 0.9792  F1 0.7805
+[  150.7s]   Random Forest                [static] PR-AUC 0.8165  ROC-AUC 0.9614  F1 0.8156
+[  382.8s]   SMOTE + Random Forest        [static] PR-AUC 0.8143  ROC-AUC 0.9734  F1 0.7961
+[  393.0s]   XGBoost                      [static] PR-AUC 0.7929  ROC-AUC 0.9733  F1 0.8099
+[  409.4s]   LightGBM                     [static] PR-AUC 0.8003  ROC-AUC 0.9838  F1 0.8167
+[  431.1s]   MLP                          [static] PR-AUC 0.7935  ROC-AUC 0.9671  F1 0.7746
+[  431.1s] Experiment 2: static vs static+temporal ablation
+[  438.7s]   Logistic Regression          [static+temporal] PR-AUC 0.7502  ROC-AUC 0.9832  F1 0.7642
+[  594.0s]   Random Forest                [static+temporal] PR-AUC 0.8139  ROC-AUC 0.9458  F1 0.8108
+[  606.7s]   XGBoost                      [static+temporal] PR-AUC 0.7966  ROC-AUC 0.9745  F1 0.8141
+[  625.3s]   LightGBM                     [static+temporal] PR-AUC 0.8029  ROC-AUC 0.9806  F1 0.8000
+[  625.5s] Experiment 3: random vs chronological split
+[  629.9s]   Logistic Regression          [random] PR-AUC 0.7297  ROC-AUC 0.9623  F1 0.8114
+[  759.0s]   Random Forest                [random] PR-AUC 0.8554  ROC-AUC 0.9634  F1 0.8472
+[  769.6s]   XGBoost                      [random] PR-AUC 0.8663  ROC-AUC 0.9740  F1 0.8721
+[  769.8s] Experiment 4: class-imbalance strategies (XGBoost, static+temporal)
+[  781.7s]   None                         [XGBoost] PR-AUC 0.7961  ROC-AUC 0.9765  F1 0.8087
+[  794.4s]   Class weighting              [XGBoost] PR-AUC 0.7966  ROC-AUC 0.9745  F1 0.8141
+[  809.1s]   SMOTE                        [XGBoost] PR-AUC 0.7962  ROC-AUC 0.9668  F1 0.8263
+[  811.9s]   Undersampling                [XGBoost] PR-AUC 0.7844  ROC-AUC 0.9851  F1 0.7851
+[  811.9s] Experiment 5: LSTM / GRU over the last k transactions
+[  818.9s]   LSTM k=5   PR-AUC 0.7867 ROC-AUC 0.9767 F1 0.7541
+[  824.0s]   LSTM k=10  PR-AUC 0.8002 ROC-AUC 0.9594 F1 0.7705
+[  833.5s]   LSTM k=20  PR-AUC 0.7905 ROC-AUC 0.9622 F1 0.7581
+[  858.5s]   LSTM k=50  PR-AUC 0.7930 ROC-AUC 0.9615 F1 0.7581
+[  864.8s]   GRU k=5   PR-AUC 0.7950 ROC-AUC 0.9820 F1 0.7907
+[  876.9s]   GRU k=10  PR-AUC 0.8037 ROC-AUC 0.9824 F1 0.8125
+[  899.7s]   GRU k=20  PR-AUC 0.8054 ROC-AUC 0.9830 F1 0.8189
+[  959.2s]   GRU k=50  PR-AUC 0.8025 ROC-AUC 0.9828 F1 0.8062
+[  959.3s] Comparing all models; selecting final model by VALIDATION PR-AUC
+[  961.0s]   selected: XGBoost
+[  962.8s] Experiment 6: operational thresholds
+[  963.3s] Experiment 7: temporal drift across early / middle / late test windows
+[  963.9s] Experiment 8: SHAP explanations for XGBoost (+temporal)
+[  965.8s] Done. See reports/RESULTS.md

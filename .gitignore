@@ -1,4 +1,4 @@
-creditcard.csv
-*.png
-results.csv
+data/*.csv
 __pycache__/
+*.pyc
+.pytest_cache/

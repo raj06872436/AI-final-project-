@@ -137,7 +137,7 @@ ul{margin:0;padding-left:20px} li{margin:3px 0}
 
 <section id="demo">
   <h2><span class="n">03</span>Live prototype</h2>
-  <p>This runs in your browser. It generates a 48-hour stream of 20,000 card transactions with injected fraud bursts and concept drift, builds leakage-safe temporal features, trains logistic regression on the earliest 60%, tunes the threshold on the next 20% and tests once on the final 20%. <span class="note">Synthetic data, used to demonstrate the method. Real-dataset code is in <span class="mono">fraud_pipeline.py</span>.</span></p>
+  <p>This runs in your browser. It generates a 48-hour stream of 20,000 card transactions with injected fraud bursts and concept drift, builds leakage-safe temporal features, trains logistic regression on the earliest 60%, tunes the threshold on the next 20% and tests once on the final 20%. <span class="note">Synthetic data, used to demonstrate the method. Results on the real dataset are in section 04.</span></p>
   <div class="panel">
     <div class="controls">
       <div class="ctl"><label for="drift">Concept drift (how much the fraud signature fades over time) <output id="driftV">0.6</output></label><input id="drift" type="range" min="0" max="1" step="0.1" value="0.6"></div>
@@ -194,7 +194,34 @@ ul{margin:0;padding-left:20px} li{margin:3px 0}
 </section>
 
 <section>
-  <h2><span class="n">04</span>Verified benchmark results (ULB dataset)</h2>
+  <h2><span class="n">04</span>Our results on the real ULB dataset</h2>
+  <p>Produced by <span class="mono">run_experiments.py</span> on all 284,807 transactions: 1,081 duplicates removed, chronological 60/20/20 split (test = hours 40.3–48.0, 74 frauds), threshold tuned on validation, 3 seeds.</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Model</th><th class="r">PR-AUC</th><th class="r">ROC-AUC</th><th class="r">Precision</th><th class="r">Recall</th><th class="r">F1</th></tr></thead>
+    <tbody>
+      <tr><td>Logistic Regression</td><td class="num">0.7447</td><td class="num">0.9811</td><td class="num">0.960</td><td class="num">0.649</td><td class="num">0.774</td></tr>
+      <tr><td>SMOTE + Logistic Regression</td><td class="num">0.7574</td><td class="num">0.9792</td><td class="num">0.980</td><td class="num">0.649</td><td class="num">0.781</td></tr>
+      <tr class="best"><td>Random Forest</td><td class="num">0.8165</td><td class="num">0.9614</td><td class="num">0.885</td><td class="num">0.757</td><td class="num">0.816</td></tr>
+      <tr><td>SMOTE + Random Forest</td><td class="num">0.8143</td><td class="num">0.9734</td><td class="num">0.876</td><td class="num">0.730</td><td class="num">0.796</td></tr>
+      <tr><td>XGBoost (final, chosen on validation)</td><td class="num">0.7929</td><td class="num">0.9733</td><td class="num">0.896</td><td class="num">0.739</td><td class="num">0.810</td></tr>
+      <tr><td>LightGBM</td><td class="num">0.8003</td><td class="num">0.9838</td><td class="num">0.907</td><td class="num">0.743</td><td class="num">0.817</td></tr>
+      <tr><td>MLP</td><td class="num">0.7935</td><td class="num">0.9671</td><td class="num">0.835</td><td class="num">0.725</td><td class="num">0.775</td></tr>
+      <tr><td>LSTM (k=10)</td><td class="num">0.8002</td><td class="num">0.9594</td><td class="num">0.979</td><td class="num">0.635</td><td class="num">0.771</td></tr>
+      <tr><td>GRU (k=20)</td><td class="num">0.8054</td><td class="num">0.9830</td><td class="num">0.981</td><td class="num">0.703</td><td class="num">0.819</td></tr>
+    </tbody>
+  </table></div>
+  <div class="grid3">
+    <div class="card"><h3>H3: random split is optimistic</h3><p class="note">XGBoost PR-AUC <b class="mono">0.866</b> on a random split vs <b class="mono">0.793</b> on the chronological split. Random Forest 0.855 vs 0.817.</p></div>
+    <div class="card"><h3>H1: temporal features</h3><p class="note">Small, mixed gain: XGBoost 0.793 → 0.797, LightGBM 0.800 → 0.803, RF 0.817 → 0.814. ULB has no card ID, so features describe the global stream only.</p></div>
+    <div class="card"><h3>H5: threshold matters</h3><p class="note">Final model: max-F1 threshold catches 55/74 with 7 false alarms; min-cost catches 58 with 41; 85% recall target catches 64 with 478.</p></div>
+    <div class="card"><h3>History window</h3><p class="note">GRU PR-AUC rises from k=5 (0.795) to k=20 (0.805), then levels off at k=50.</p></div>
+    <div class="card"><h3>Drift</h3><p class="note">All models lose PR-AUC in the last third of the test period (XGBoost 0.84 → 0.53, only 12 frauds there).</p></div>
+    <div class="card"><h3>SHAP</h3><p class="note">Top features: V4, V14, V12, V11, V10, the same set the public benchmark reports.</p></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="n">05</span>Verified public benchmark results (ULB dataset)</h2>
   <p>Public, reproducible 2026 benchmark runs on the real dataset. These are reported as external benchmark evidence, not as a fresh training run of this project.</p>
   <div class="tablewrap"><table>
     <thead><tr><th>Model</th><th class="r">Precision</th><th class="r">Recall</th><th class="r">F1</th><th class="r">ROC-AUC</th><th class="r">PR-AUC</th><th>Status</th></tr></thead>
@@ -205,8 +232,8 @@ ul{margin:0;padding-left:20px} li{margin:3px 0}
       <tr class="best"><td>SMOTE Random Forest</td><td class="num">92.00%</td><td class="num">72.63%</td><td class="num">0.8118</td><td class="num">0.9598</td><td class="num">0.8016</td><td><span class="pill ok">verified</span></td></tr>
       <tr><td>MLP</td><td class="num">82.76%</td><td class="num">75.79%</td><td class="num">0.7912</td><td class="num">0.9365</td><td class="num">0.6838</td><td><span class="pill ok">verified</span></td></tr>
       <tr><td>XGBoost (time-ordered)</td><td class="num">93.00%</td><td class="num">71.60%</td><td class="num">0.8090</td><td class="num">0.9840</td><td class="num">0.7940</td><td><span class="pill ok">verified</span></td></tr>
-      <tr><td>LightGBM</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td><span class="pill mid">to reproduce</span></td></tr>
-      <tr><td>LSTM / GRU</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td><span class="pill mid">needs entity sequences</span></td></tr>
+      <tr><td>LightGBM</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td><span class="pill ok">ours: 0.8003</span></td></tr>
+      <tr><td>LSTM / GRU</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td><span class="pill ok">ours: 0.800 / 0.805</span></td></tr>
     </tbody>
   </table></div>
   <div class="grid2">
@@ -240,13 +267,13 @@ ul{margin:0;padding-left:20px} li{margin:3px 0}
 </section>
 
 <section>
-  <h2><span class="n">05</span>Hypotheses</h2>
+  <h2><span class="n">06</span>Hypotheses</h2>
   <div class="tablewrap"><table>
     <thead><tr><th>#</th><th>Hypothesis</th><th>Evidence so far</th></tr></thead>
     <tbody>
-      <tr><td class="mono">H1</td><td style="white-space:normal">Leakage-safe temporal features improve PR-AUC / recall over static features.</td><td><span class="pill ok">supported in prototype</span></td></tr>
-      <tr><td class="mono">H2</td><td style="white-space:normal">LSTM/GRU add value when valid entity histories exist.</td><td><span class="pill mid">planned (IEEE-CIS)</span></td></tr>
-      <tr><td class="mono">H3</td><td style="white-space:normal">Chronological evaluation shows more degradation than random evaluation.</td><td><span class="pill ok">supported (benchmark + prototype)</span></td></tr>
+      <tr><td class="mono">H1</td><td style="white-space:normal">Leakage-safe temporal features improve PR-AUC / recall over static features.</td><td><span class="pill mid">small gain on ULB (no card IDs)</span></td></tr>
+      <tr><td class="mono">H2</td><td style="white-space:normal">LSTM/GRU add value when valid entity histories exist.</td><td><span class="pill mid">comparable to trees (GRU 0.805)</span></td></tr>
+      <tr><td class="mono">H3</td><td style="white-space:normal">Chronological evaluation shows more degradation than random evaluation.</td><td><span class="pill ok">supported (0.866 vs 0.793)</span></td></tr>
       <tr><td class="mono">H4</td><td style="white-space:normal">PR-AUC is a better selection signal than accuracy or ROC-AUC.</td><td><span class="pill ok">supported (RF: low ROC, high PR)</span></td></tr>
       <tr><td class="mono">H5</td><td style="white-space:normal">Best model by AUC is not always best at a practical false-positive limit.</td><td><span class="pill ok">supported</span></td></tr>
     </tbody>
@@ -254,7 +281,7 @@ ul{margin:0;padding-left:20px} li{margin:3px 0}
 </section>
 
 <section>
-  <h2><span class="n">06</span>Datasets, models and imbalance handling</h2>
+  <h2><span class="n">07</span>Datasets, models and imbalance handling</h2>
   <div class="grid2">
     <div class="card">
       <h3>Datasets</h3>
@@ -298,7 +325,7 @@ ul{margin:0;padding-left:20px} li{margin:3px 0}
 </section>
 
 <section>
-  <h2><span class="n">07</span>Metrics</h2>
+  <h2><span class="n">08</span>Metrics</h2>
   <div class="tablewrap"><table>
     <thead><tr><th>Metric</th><th>Formula</th><th>Meaning</th></tr></thead>
     <tbody>
@@ -313,7 +340,7 @@ ul{margin:0;padding-left:20px} li{margin:3px 0}
 </section>
 
 <section>
-  <h2><span class="n">08</span>Limitations, ethics and future work</h2>
+  <h2><span class="n">09</span>Limitations, ethics and future work</h2>
   <div class="grid3">
     <div class="card"><h3>Limitations</h3><ul class="note"><li>ULB features are anonymized PCA components.</li><li>Only 2 days of data, so long-term drift is limited.</li><li>No customer IDs on ULB.</li><li>Benchmarks come from different pipelines.</li><li>SHAP shows attribution, not causality.</li></ul></div>
     <div class="card"><h3>Ethics</h3><ul class="note"><li>False positives block real customers.</li><li>The model supports a human reviewer and does not decide alone.</li><li>Public anonymized data only.</li></ul></div>
@@ -322,7 +349,7 @@ ul{margin:0;padding-left:20px} li{margin:3px 0}
 </section>
 
 <section>
-  <h2><span class="n">09</span>Viva quick answers</h2>
+  <h2><span class="n">10</span>Viva quick answers</h2>
   <div class="qa">
     <details><summary>Why not use accuracy?</summary><p>With 0.172% fraud, predicting "legit" for everything gives 99.83% accuracy and catches nothing. PR-AUC, recall and precision focus on the rare fraud class.</p></details>
     <details><summary>What is data leakage here?</summary><p>Any information from validation/test or from the future reaching training: random splits that train on later transactions, fitting the scaler or SMOTE on all data, or choosing the threshold on the test set.</p></details>
@@ -330,7 +357,7 @@ ul{margin:0;padding-left:20px} li{margin:3px 0}
     <details><summary>Why is PR-AUC better than ROC-AUC here?</summary><p>ROC-AUC uses the false positive rate, whose denominator is the huge number of legitimate transactions, so many false alarms still look small. PR-AUC uses precision, which directly shows how many alerts are false.</p></details>
     <details><summary>Why not just use 0.5 as threshold?</summary><p>Probabilities are skewed under imbalance and the right threshold depends on business cost (review capacity vs missed fraud). We tune it on validation data. The XGBoost benchmark selected 0.266.</p></details>
     <details><summary>What is SHAP?</summary><p>SHapley Additive exPlanations: game-theory based attribution that splits a prediction into contributions from each feature. Global view: which features matter overall. Local view: why this one transaction was flagged.</p></details>
-    <details><summary>Why LSTM/GRU, and why not on ULB?</summary><p>They learn from ordered sequences such as the last k transactions of the same card. ULB has no card IDs, so valid sequences are built on IEEE-CIS. GRU is a lighter version of LSTM with fewer gates.</p></details>
+    <details><summary>How did you use LSTM/GRU on ULB?</summary><p>Each sample is the window of the last k transactions (k = 5, 10, 20, 50) in time order, and the label is the last one. ULB has no card IDs, so the window is the global stream; GRU reached PR-AUC 0.805, similar to tree models. Per-card sequences need IEEE-CIS. GRU is a lighter LSTM with fewer gates.</p></details>
     <details><summary>What is concept drift?</summary><p>Fraud patterns and customer behavior change over time, so a model trained on old data degrades. We test it by evaluating early, middle and late windows separately. Try the drift slider in the prototype.</p></details>
     <details><summary>What is your contribution if temporal fraud detection already exists?</summary><p>A controlled, reproducible comparison that measures how much temporal and behavioral information adds over strong baselines, under strict leakage-free chronological evaluation, with explainability and false-positive constraints.</p></details>
   </div>

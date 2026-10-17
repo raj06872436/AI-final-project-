@@ -1,0 +1,70 @@
+{
+  "seeds": [
+    42,
+    7,
+    2024
+  ],
+  "quick": false,
+  "audit_raw": {
+    "rows": 284807,
+    "fraud": 492,
+    "legit": 284315,
+    "fraud_rate": 0.001727485630620034,
+    "duplicate_rows": 1081,
+    "duplicate_fraud_rows": 19,
+    "missing_values": 0,
+    "time_span_hours": 47.99777777777778,
+    "trivial_all_legit_accuracy": 0.9982725143693799
+  },
+  "audit_clean": {
+    "rows": 283726,
+    "fraud": 473,
+    "legit": 283253,
+    "fraud_rate": 0.001667101358352777,
+    "duplicate_rows": 0,
+    "duplicate_fraud_rows": 0,
+    "missing_values": 0,
+    "time_span_hours": 47.99777777777778,
+    "trivial_all_legit_accuracy": 0.9983328986416472
+  },
+  "splits": [
+    {
+      "split": "train",
+      "rows": 170235,
+      "fraud": 342,
+      "fraud_rate": 0.002008987575997885,
+      "time_start_h": 0.0,
+      "time_end_h": 33.44222222222222
+    },
+    {
+      "split": "validation",
+      "rows": 56745,
+      "fraud": 57,
+      "fraud_rate": 0.0010044937879989425,
+      "time_start_h": 33.4425,
+      "time_end_h": 40.3425
+    },
+    {
+      "split": "test",
+      "rows": 56746,
+      "fraud": 74,
+      "fraud_rate": 0.0013040566735981391,
+      "time_start_h": 40.342777777777776,
+      "time_end_h": 47.99777777777778
+    }
+  ],
+  "final_model": "XGBoost",
+  "top_shap_features": [
+    "V4",
+    "V14",
+    "V12",
+    "V11",
+    "V10",
+    "V1",
+    "V8",
+    "V19",
+    "V21",
+    "V24"
+  ],
+  "runtime_minutes": 16.09600915511449
+}
