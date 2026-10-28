@@ -67,3 +67,39 @@ def test_threshold_rules_use_given_data():
     assert 0 < t < 1
     assert evaluate.metrics(y, p, evaluate.threshold_min_precision(y, p, 0.9))["precision"] >= 0.9
     assert evaluate.metrics(y, p, evaluate.threshold_min_recall(y, p, 0.85))["recall"] >= 0.85
+
+
+# ---------------- novelty: explanation-drift monitor ----------------
+from fraud import adaptive  # noqa: E402
+
+
+def test_explanation_drift_zero_on_identical_and_grows_with_shift():
+    r = np.random.default_rng(0)
+    ref = r.normal(size=(2000, 5))
+    assert adaptive.explanation_drift(ref, ref) == pytest.approx(0, abs=1e-12)
+    small = adaptive.explanation_drift(ref, ref + 0.1)
+    big = adaptive.explanation_drift(ref, ref + 1.0)
+    assert 0 < small < big
+    attr = adaptive.drift_attribution(ref, ref + np.array([0, 0, 2.0, 0, 0]), list("abcde"))
+    assert attr.index[0] == "c" and attr.sum() == pytest.approx(1)
+
+
+def test_psi_detects_shift():
+    r = np.random.default_rng(0)
+    ref = r.normal(size=(5000, 3))
+    assert adaptive.psi(ref, r.normal(size=(5000, 3))) < 0.02
+    assert adaptive.psi(ref, r.normal(1.0, size=(5000, 3))) > 0.2
+
+
+def test_stream_never_trains_on_unreleased_labels():
+    """With label delay d, a model used on chunk t was trained on at most chunks < t - d."""
+    from xgboost import XGBClassifier
+    r = np.random.default_rng(0)
+    Xh, Xs = r.normal(size=(3000, 4)).astype(np.float32), r.normal(size=(2400, 4)).astype(np.float32)
+    yh, ys = (Xh[:, 0] > 1.5).astype(int), (Xs[:, 0] > 1.5).astype(int)
+    make = lambda: XGBClassifier(n_estimators=10, max_depth=2)
+    for delay in (1, 2):
+        pc, *_ = adaptive.run_stream(make, Xh, yh, Xs, ys, n_chunks=12, delay=delay, strategy="periodic", period=1,
+                                     monitor_kw={"ref_rows": 500, "n_calib": 4})
+        assert (pc.known_chunks <= np.maximum(pc.chunk - delay, 0)).all()
+        assert pc.known_chunks.iloc[-1] > 0

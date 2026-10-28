@@ -18,6 +18,9 @@ streamlit run app.py             # dashboard: dataset, results, live scoring wit
 pytest -q                        # leakage and metric tests
 ```
 
+`python run_novelty.py` runs the novelty experiment below (about 100 min for 3 seeds; `--quick` uses 1 seed,
+`--analyse-only` rebuilds tables and figures from saved CSVs).
+
 `python run_experiments.py --quick` runs one seed and fewer sequence windows. In Google Colab, upload the repo
 (or `git clone` it), then run the same commands with a leading `!`.
 
@@ -33,7 +36,9 @@ src/fraud/
   evaluate.py    PR-AUC, ROC-AUC, F1, FPR, cost; validation-based thresholds; drift windows
   explain.py     SHAP global (summary, bar) and local (waterfall) explanations
   plots.py       figures
+  adaptive.py    novelty: SHAP explanation-drift monitor, input-drift (PSI) baseline, streaming replay
 run_experiments.py   runs every experiment and writes results/ and reports/RESULTS.md
+run_novelty.py       novelty experiment, writes results/novelty_* and reports/NOVELTY.md
 app.py               Streamlit dashboard
 tests/               leakage tests (past-only features, no split overlap) and metric tests
 results/             CSV tables, summary.json, figures/
@@ -86,6 +91,78 @@ temporal features → models (scaling and SMOTE inside pipelines, fit on train o
 - **Drift:** every model loses PR-AUC in the last third of the test period (XGBoost 0.84 → 0.53). That third contains only 12 frauds, so treat this as an indication rather than a firm result.
 - **SHAP:** the top features are V4, V14, V12, V11 and V10, which match the published benchmark.
 
+## Novelty: explanation-drift-triggered retraining (H6)
+
+**Problem.** Our drift experiment shows that performance moves over the test period, but a deployed fraud model
+cannot see that in time. Labels (chargebacks, analyst verdicts) arrive late, so label-based monitoring reacts
+late. Classic label-free monitoring compares *input* distributions (PSI), which also fires when fields the
+model ignores change, causing needless retrains.
+
+**Idea.** Monitor the model's own **SHAP explanations** of incoming, still-unlabelled transactions. If the way
+the model reasons about the stream changes, retrain; if only irrelevant inputs change, stay quiet. The method
+(`src/fraud/adaptive.py`) has three parts:
+
+1. **Explanation-drift score.** For each chunk of new transactions,
+   `D = Σ_j W1(SHAP_ref_j, SHAP_chunk_j) / Σ_j E|SHAP_ref_j|`, the share of the model's attribution mass that
+   has moved (W1 = 1-D Wasserstein distance). The alarm threshold is the 90th percentile of D over the most
+   recent training chunks, so it is set without labels and without looking at the future.
+2. **Alarm-then-adapt retraining.** With delayed labels, retraining right after an alarm does not help,
+   because the drifted chunk's own labels are not known yet. An alarm therefore opens a short adaptation
+   window (4 chunks) in which the model is retrained whenever new labels arrive.
+3. **Delayed-label guard.** When a chunk's labels arrive and the deployed model caught significantly fewer
+   than half of its frauds (one-sided binomial test, α = 0.05), that also raises an alarm. This covers concept
+   drift that leaves unlabelled data looking normal.
+
+Each alarm also comes with an explanation: the per-feature split of D shows which features' attributions moved.
+
+**Protocol.** The model is trained on the training period. The validation and test periods (113,491
+transactions, 131 frauds) are replayed as 24 chunks of about 36 minutes. Each chunk is scored before its labels
+exist, and labels arrive one chunk late. We test four streams: the **real** stream, plus three controlled shifts
+starting at chunk 8. In **harmless**, the 10 features the model relies on least move by +2 SD. In **harmful**,
+the 3 it relies on most (V14, V4, V12) move by +3 SD. In **flip**, the sign of those 3 features flips. We compare
+against a frozen model, periodic retraining, a PSI trigger, and retraining at random times with the same number
+of retrains. Everything uses XGBoost (static + temporal) and 3 seeds.
+
+**Results** (PR-AUC after the shift onset, mean of 3 seeds; full tables in [`reports/NOVELTY.md`](reports/NOVELTY.md))
+
+| Stream | Frozen | Retrain every chunk (22) | Every 4 chunks (5) | PSI trigger | **Proposed** (SHAP drift + label guard) |
+|---|---|---|---|---|---|
+| real | 0.799 | 0.793 | 0.795 | 0.799 (0 retrains) | **0.799 (0 retrains)** |
+| harmless | 0.796 | 0.803 | 0.806 | 0.801 (5, false alarm) | **0.796 (0 retrains, no false alarm)** |
+| harmful | 0.737 | 0.766 | 0.760 | 0.768 (5) | **0.768 (5)**; random timing with 5 retrains: 0.745 |
+| flip | 0.001 | 0.654 | 0.542 | 0.001 (never fires) | **0.618 (5.3)** |
+
+**What this shows**
+- **No false alarms:** on the real stream and the harmless shift, the explanation monitor never fires. PSI
+  fires on every chunk after the harmless shift.
+- **Efficient when it matters:** after the harmful shift, 5 well-timed retrains recover more than retraining
+  every chunk (0.768 vs 0.766 with 22 retrains). Retraining 5 times at random moments recovers less (0.745),
+  so the timing comes from the monitor, not from retraining in general.
+- **The label guard closes the blind spot.** Flipping the top features makes fraud invisible to the frozen
+  model (PR-AUC 0.001), while the unlabelled data still looks normal to both label-free monitors. The guard
+  catches it once labels arrive and recovers to 0.618 with about 5 retrains. Retraining every 4 chunks, at the
+  same cost, reaches 0.542.
+- **Explained alarms:** on the harmful stream, V4, V14 and V12 carry most of the drift score
+  (`novelty_drift_attribution.png`). On the real stream, the largest contributor is `hour_sin`, the day/night
+  cycle, which is natural and stays below the threshold.
+
+**Why it is novel.** Explanation shift as a drift measure was proposed by Mougan et al. (2023). As far as we know,
+nobody has used it as a **retraining trigger for fraud detection under delayed labels**, or combined it with
+alarm-then-adapt retraining and a statistical delayed-label guard. Nor has it been evaluated against PSI,
+periodic and random-timing baselines on harmless, harmful and concept-drift streams.
+
+**Honest limits.** On the real two-day stream there is no drift worth acting on: retraining every chunk does
+not beat the frozen model, so the monitor's value there is that it saves the retraining cost. The shift
+scenarios are controlled stress tests, and they were designed after a first run showed the real stream has no
+drift worth acting on. The alarm-then-adapt window and the label guard were added after a first version that
+retrained only once adapted too slowly, and after the flip scenario exposed the blind spot. On the harmful
+stream the PSI trigger performs the same as the proposed trigger; the difference is that PSI also raises false
+alarms on irrelevant fields.
+
+![Novelty timeline](results/figures/novelty_drift_timeline.png)
+![Novelty trade-off](results/figures/novelty_tradeoff.png)
+![Drift attribution](results/figures/novelty_drift_attribution.png)
+
 ## Figures
 
 | | |
@@ -109,5 +186,7 @@ Python, pandas, NumPy, scikit-learn, imbalanced-learn, XGBoost, LightGBM, PyTorc
 
 Dal Pozzolo et al., *Calibrating Probability with Undersampling for Unbalanced Classification*, IEEE SSCI 2015 ·
 Lundberg & Lee, *A Unified Approach to Interpreting Model Predictions*, NeurIPS 2017 ·
+Mougan et al., *Explanation Shift: How Did the Distribution Shift Impact the Model?*, 2023 ·
+Gama et al., *A Survey on Concept Drift Adaptation*, ACM Computing Surveys 2014 ·
 Motie & Raahemi, *Financial fraud detection using graph neural networks: a systematic review*, ESWA 2024 ·
 ULB / Worldline Credit Card Fraud Detection dataset · IEEE-CIS Fraud Detection dataset.

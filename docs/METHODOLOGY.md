@@ -12,6 +12,7 @@ baseline models are compared under one leakage-free evaluation framework?
 | H3 | Chronological evaluation shows more degradation than random evaluation | Experiment 3 (`split_comparison.csv`) |
 | H4 | PR-AUC is a more meaningful selection signal than accuracy or ROC-AUC | Audit + all tables |
 | H5 | The best model by AUC is not necessarily best at a practical false-positive limit | Experiment 6 (`operating_points.csv`) |
+| H6 | Monitoring SHAP explanations of unlabelled traffic decides when to retrain better than input drift or a fixed schedule | `run_novelty.py` (`novelty_comparison.csv`, `reports/NOVELTY.md`) |
 
 ## Pipeline
 1. **Audit** – row counts, imbalance, missing values, duplicates (`fraud/data.py`).
@@ -28,6 +29,21 @@ baseline models are compared under one leakage-free evaluation framework?
 9. **Drift**: the test period is split into early / middle / late windows and scored separately.
 10. **Explainability**: SHAP TreeExplainer – global (summary, bar) and local (waterfall for one flagged transaction).
 
+## Novelty: explanation-drift-triggered retraining (H6)
+`fraud/adaptive.py`, `run_novelty.py`. The validation and test periods are replayed as 24 chunks. Each chunk is
+scored before its labels are known, and labels arrive one chunk late (`test_stream_never_trains_on_unreleased_labels`).
+- *Explanation drift*: `D = Σ_j W1(SHAP_ref_j, SHAP_chunk_j) / Σ_j E|SHAP_ref_j|`. SHAP values come from
+  XGBoost's exact TreeSHAP. The reference is the last 10,000 labelled rows.
+- *Input drift (baseline)*: mean PSI over all features, using 10 quantile bins from the reference.
+- *Thresholds*: the 90th percentile of the score over the 12 training chunks before the reference. This is
+  recomputed after every retrain and uses no labels or future data.
+- *Alarm-then-adapt*: an alarm opens a 4-chunk window in which the model retrains whenever new labels have arrived.
+- *Delayed-label guard*: an alarm also fires if a newly labelled chunk shows recall at the 0.2 % review budget
+  significantly below 0.5 (one-sided binomial, α = 0.05).
+- *Streams*: real, plus controlled shifts from chunk 8 (harmless: 10 least-important features +2 SD; harmful:
+  3 most-important +3 SD; flip: sign of the 3 most-important). Baselines are frozen, periodic (1 and 4),
+  PSI trigger, and random retrain times with the same number of retrains.
+
 ## Leakage controls (and how they are checked)
 | Control | Where | Test |
 |---|---|---|
@@ -37,6 +53,7 @@ baseline models are compared under one leakage-free evaluation framework?
 | Duplicates removed before split | `clean` | `test_clean_removes_duplicates_and_sorts` |
 | Scaler / SMOTE fit on train only | imblearn `Pipeline` | by construction |
 | Threshold from validation only | `run_experiments.fit_eval` | by construction |
+| Streaming model never sees labels before they are released | `adaptive.run_stream` | `test_stream_never_trains_on_unreleased_labels` |
 
 ## Sequence models
 Each sample is the window of the last *k* transactions (k ∈ {5, 10, 20, 50}) ending at the current one; the
