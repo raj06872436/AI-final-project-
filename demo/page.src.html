@@ -6,15 +6,15 @@
 /* Layout: single reading column (max 1080px), sections as numbered report chapters, demo as a two-pane instrument panel */
 :root{
   --bg:#f5f7fb; --surface:#ffffff; --ink:#141a2b; --muted:#5b6478; --line:#dfe3ec;
-  --accent:#2747d6; --accent-soft:#e6ebff; --fraud:#c7362f; --fraud-soft:#fbe7e5; --ok:#1f8a5b; --ok-soft:#e1f4ea; --warn:#a86a00;
+  --accent:#2747d6; --accent-soft:#e6ebff; --fraud:#c7362f; --fraud-soft:#fbe7e5; --ok:#1f8a5b; --ok-soft:#e1f4ea; --warn:#a86a00; --prop:#0b7f7a; --prop-soft:#dcf2f0;
   --display:"Archivo",system-ui,sans-serif; --body:"IBM Plex Sans",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,monospace;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#0e1220; --surface:#161b2c; --ink:#e7eaf3; --muted:#9aa3b8; --line:#2a3148;
-  --accent:#8199ff; --accent-soft:#1f2850; --fraud:#ff7a70; --fraud-soft:#3a1d1f; --ok:#4fd18f; --ok-soft:#14301f; --warn:#e8b14a; color-scheme:dark}}
+  --accent:#8199ff; --accent-soft:#1f2850; --fraud:#ff7a70; --fraud-soft:#3a1d1f; --ok:#4fd18f; --ok-soft:#14301f; --warn:#e8b14a; --prop:#3fd0c4; --prop-soft:#123533; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#0e1220; --surface:#161b2c; --ink:#e7eaf3; --muted:#9aa3b8; --line:#2a3148;
-  --accent:#8199ff; --accent-soft:#1f2850; --fraud:#ff7a70; --fraud-soft:#3a1d1f; --ok:#4fd18f; --ok-soft:#14301f; --warn:#e8b14a; color-scheme:dark}
+  --accent:#8199ff; --accent-soft:#1f2850; --fraud:#ff7a70; --fraud-soft:#3a1d1f; --ok:#4fd18f; --ok-soft:#14301f; --warn:#e8b14a; --prop:#3fd0c4; --prop-soft:#123533; color-scheme:dark}
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.6}
 .wrap{max-width:1080px;margin:0 auto;padding-block:32px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:56px}
@@ -82,16 +82,40 @@ details summary{cursor:pointer;font-weight:600}
 details p{margin-top:8px;color:var(--muted)}
 .qa{display:flex;flex-direction:column;gap:8px}
 ul{margin:0;padding-left:20px} li{margin:3px 0}
+.topnav{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line);margin-inline:calc(-1*max(16px,env(safe-area-inset-left,0px)));padding:8px max(16px,env(safe-area-inset-left,0px));display:flex;gap:6px 14px;flex-wrap:wrap;font-size:13px}
+.topnav a{color:var(--muted);text-decoration:none;font-weight:500}.topnav a:hover,.topnav a:focus-visible{color:var(--accent)}
+.topnav a.nov{color:var(--prop);font-weight:700}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.segb{background:var(--surface);color:var(--ink);border:1px solid var(--line);font-weight:500}
+.segb[aria-selected="true"]{background:var(--prop);border-color:var(--prop);color:var(--surface)}
+.replay-head{display:flex;flex-direction:column;gap:10px}
+.race{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.lane{border:1px solid var(--line);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;gap:2px;border-top:4px solid var(--muted)}
+.lane.psi{border-top-color:var(--accent)} .lane.prop{border-top-color:var(--prop);background:var(--prop-soft)}
+.lane b{font-family:var(--mono);font-size:22px;font-weight:500}
+.lname{font-size:12.5px;font-weight:600}.lsub{font-size:12px;color:var(--muted)}
+.charts .card{gap:6px}
+.log{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:13.5px}
+.ev{display:grid;grid-template-columns:42px 1fr;gap:8px;padding:6px 8px;border-radius:6px;background:var(--bg)}
+.ev.prop{background:var(--prop-soft)} .ev.psi{background:var(--accent-soft)} .ev .mono{color:var(--muted)}
+.figs{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+figure{margin:0;background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:6px;min-width:0}
+figure.wide{grid-column:1/-1}
+figure img{width:100%;height:auto;display:block}
+figcaption{font-size:12.5px;color:#4a5263}
+@media (max-width:760px){.race,.figs{grid-template-columns:1fr}}
 @media (max-width:760px){.grid2,.grid3{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}.metrics{grid-template-columns:repeat(2,1fr)}.bar{grid-template-columns:100px 1fr 48px}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 
 <div class="wrap">
+<nav class="topnav" aria-label="Sections"><a href="#problem">Problem</a><a href="#pipeline">Pipeline</a><a href="#demo">Prototype</a><a href="#results">Results</a><a class="nov" href="#novelty">Novelty</a><a href="#figures">Figures</a><a href="#hypotheses">Hypotheses</a><a href="#limits">Limits</a><a href="#viva">Viva Q&amp;A</a></nav>
 
 <header class="hero">
   <div class="eyebrow">AI Laboratory · T.Y. B.Tech Information Technology · Research Project</div>
   <h1>Temporal and Explainable Machine Learning for Early Financial Fraud Detection</h1>
-  <p class="lede">A leakage-free comparison of transaction-level, temporal and behavioral models. This page walks through the problem, the method, a working in-browser prototype, the verified benchmark results and the research plan.</p>
+  <p class="lede">A leakage-free comparison of transaction-level, temporal and behavioral models. This page walks through the problem, the method, a working in-browser prototype, our results on the real dataset, and our novelty: a model that monitors its own SHAP explanations to decide when to retrain.</p>
   <div class="stats">
     <div class="stat"><b>284,807</b><span>transactions in ULB European dataset</span></div>
     <div class="stat alert"><b>492</b><span>fraud cases</span></div>
@@ -100,7 +124,7 @@ ul{margin:0;padding-left:20px} li{margin:3px 0}
   </div>
 </header>
 
-<section>
+<section id="problem">
   <h2><span class="n">01</span>Problem and why it is hard</h2>
   <p><b>Problem statement.</b> Develop and evaluate a leakage-free ML framework for financial fraud detection that compares transaction-level models with temporal and behavioral models, and explains individual fraud predictions.</p>
   <div class="grid3">
@@ -110,7 +134,7 @@ ul{margin:0;padding-left:20px} li{margin:3px 0}
   </div>
 </section>
 
-<section>
+<section id="pipeline">
   <h2><span class="n">02</span>Pipeline</h2>
   <div class="pipeline">
     <span class="step">Raw transactions</span><span class="arrow">→</span>
@@ -193,7 +217,7 @@ ul{margin:0;padding-left:20px} li{margin:3px 0}
   </div>
 </section>
 
-<section>
+<section id="results">
   <h2><span class="n">04</span>Our results on the real ULB dataset</h2>
   <p>Produced by <span class="mono">run_experiments.py</span> on all 284,807 transactions: 1,081 duplicates removed, chronological 60/20/20 split (test = hours 40.3–48.0, 74 frauds), threshold tuned on validation, 3 seeds.</p>
   <div class="tablewrap"><table>
@@ -206,22 +230,90 @@ ul{margin:0;padding-left:20px} li{margin:3px 0}
       <tr><td>XGBoost (final, chosen on validation)</td><td class="num">0.7929</td><td class="num">0.9733</td><td class="num">0.896</td><td class="num">0.739</td><td class="num">0.810</td></tr>
       <tr><td>LightGBM</td><td class="num">0.8003</td><td class="num">0.9838</td><td class="num">0.907</td><td class="num">0.743</td><td class="num">0.817</td></tr>
       <tr><td>MLP</td><td class="num">0.7935</td><td class="num">0.9671</td><td class="num">0.835</td><td class="num">0.725</td><td class="num">0.775</td></tr>
-      <tr><td>LSTM (k=10)</td><td class="num">0.8002</td><td class="num">0.9594</td><td class="num">0.979</td><td class="num">0.635</td><td class="num">0.771</td></tr>
-      <tr><td>GRU (k=20)</td><td class="num">0.8054</td><td class="num">0.9830</td><td class="num">0.981</td><td class="num">0.703</td><td class="num">0.819</td></tr>
+      <tr><td>LSTM (k=5, chosen on validation)</td><td class="num">0.7867</td><td class="num">0.9767</td><td class="num">0.958</td><td class="num">0.622</td><td class="num">0.754</td></tr>
+      <tr><td>GRU (k=5, chosen on validation)</td><td class="num">0.7950</td><td class="num">0.9820</td><td class="num">0.927</td><td class="num">0.689</td><td class="num">0.791</td></tr>
     </tbody>
   </table></div>
   <div class="grid3">
     <div class="card"><h3>H3: random split is optimistic</h3><p class="note">XGBoost PR-AUC <b class="mono">0.866</b> on a random split vs <b class="mono">0.793</b> on the chronological split. Random Forest 0.855 vs 0.817.</p></div>
     <div class="card"><h3>H1: temporal features</h3><p class="note">Small, mixed gain: XGBoost 0.793 → 0.797, LightGBM 0.800 → 0.803, RF 0.817 → 0.814. ULB has no card ID, so features describe the global stream only.</p></div>
     <div class="card"><h3>H5: threshold matters</h3><p class="note">Final model: max-F1 threshold catches 55/74 with 7 false alarms; min-cost catches 58 with 41; 85% recall target catches 64 with 478.</p></div>
-    <div class="card"><h3>History window</h3><p class="note">GRU PR-AUC rises from k=5 (0.795) to k=20 (0.805), then levels off at k=50.</p></div>
+    <div class="card"><h3>History window</h3><p class="note">Test PR-AUC for GRU rises from k=5 (0.795) to k=20 (0.805), then levels off at k=50. The window is still chosen on validation (k=5), never on test.</p></div>
     <div class="card"><h3>Drift</h3><p class="note">All models lose PR-AUC in the last third of the test period (XGBoost 0.84 → 0.53, only 12 frauds there).</p></div>
-    <div class="card"><h3>SHAP</h3><p class="note">Top features: V4, V14, V12, V11, V10, the same set the public benchmark reports.</p></div>
+    <div class="card"><h3>SHAP</h3><p class="note">Explained model: XGBoost (+temporal), so the temporal features can be inspected. Top features: V4, V14, V12, V11, V10, the same set the public benchmark reports.</p></div>
   </div>
 </section>
 
-<section>
-  <h2><span class="n">05</span>Verified public benchmark results (ULB dataset)</h2>
+<section id="novelty">
+  <h2><span class="n">05</span>Novelty: a model that knows when to retrain</h2>
+  <p class="lede">Fraud labels arrive late, so a deployed model cannot tell from labels alone that it has started failing. Our model watches its own <b>SHAP explanations</b> of new, still-unlabelled transactions. When the way it reasons about the stream changes, it retrains. When only fields it ignores change, it stays quiet. Each alarm also names the features that caused it.</p>
+  <div class="grid3">
+    <div class="card"><span class="eyebrow">Step 1 · label-free</span><h3>Explanation-drift score</h3><p class="note">For every chunk of new transactions, measure how far the SHAP attributions have moved from the most recent training data: <span class="mono">D = Σ W1(SHAP<sub>ref</sub>, SHAP<sub>now</sub>) / Σ E|SHAP<sub>ref</sub>|</span>. The alarm threshold is the 90th percentile of D on earlier training chunks, so no labels and no future data are used.</p></div>
+    <div class="card"><span class="eyebrow">Step 2 · delayed labels</span><h3>Alarm, then adapt</h3><p class="note">Retraining right after an alarm does not help, because the drifted chunk's labels are not known yet. An alarm opens a 4-chunk window in which the model retrains each time new labels arrive.</p></div>
+    <div class="card"><span class="eyebrow">Step 3 · safety net</span><h3>Delayed-label guard</h3><p class="note">When a chunk's labels arrive and the model caught significantly fewer than half of its frauds (one-sided binomial test, α = 0.05), that also raises an alarm. This catches fraud that changes while the data still looks normal.</p></div>
+  </div>
+
+  <div class="panel" id="replay">
+    <div class="replay-head">
+      <div class="seg" role="tablist" aria-label="Stream scenario">
+        <button class="segb" data-s="real" role="tab">Real stream</button>
+        <button class="segb" data-s="harmless" role="tab">Harmless shift</button>
+        <button class="segb" data-s="harmful" role="tab">Harmful shift</button>
+        <button class="segb" data-s="flip" role="tab">Silent fraud flip</button>
+      </div>
+      <p class="note" id="scenDesc"></p>
+    </div>
+    <div class="controls">
+      <button id="play">▶ Play stream</button>
+      <button class="ghost" id="stepB">Step one chunk</button>
+      <div class="ctl"><label for="cur">Chunk <output id="curV"></output></label><input id="cur" type="range" min="0" max="23" step="1" value="23"></div>
+    </div>
+    <div class="race">
+      <div class="lane frozen"><span class="lname">Frozen model</span><b id="cFrozen"></b><span class="lsub" id="rFrozen"></span></div>
+      <div class="lane psi"><span class="lname">PSI input-drift trigger</span><b id="cPsi"></b><span class="lsub" id="rPsi"></span></div>
+      <div class="lane prop"><span class="lname">Proposed (SHAP drift + label guard)</span><b id="cProp"></b><span class="lsub" id="rProp"></span></div>
+    </div>
+    <div class="grid2 charts">
+      <div class="card"><h3>Detection quality per chunk</h3><p class="note">PR-AUC on each chunk (3-chunk mean). Triangles mark retrains. Where lines overlap, the strategies scored the same.</p><svg id="qChart" viewBox="0 0 420 230" width="100%" role="img" aria-label="Per-chunk PR-AUC for each strategy"></svg></div>
+      <div class="card"><h3>Label-free drift signals</h3><p class="note">Measured on the frozen model: score divided by its alarm threshold. Above the dashed line means alarm.</p><svg id="dChart" viewBox="0 0 420 230" width="100%" role="img" aria-label="Drift scores relative to threshold"></svg></div>
+    </div>
+    <div class="grid2">
+      <div class="card"><h3>Event log</h3><ol id="log" class="log"></ol></div>
+      <div class="card"><h3>Why the alarm fired</h3><p class="note" id="attrNote"></p><div id="attrBars" class="bars"></div></div>
+    </div>
+  </div>
+
+  <h3>Results over 3 seeds</h3><p class="note">PR-AUC from chunk 8 on, where the shifts start. Retrains in brackets.</p>
+  <div class="tablewrap"><table id="novTable"></table></div>
+  <div class="grid2">
+    <p class="callout">On the harmful shift, 5 well-timed retrains (0.768) beat retraining every chunk (0.766 with 22 retrains). Retraining 5 times at random moments reaches only 0.745, so the timing comes from the monitor. When the fraud signature flips silently, only the label guard notices, and the model recovers from 0.001 to 0.618.</p>
+    <p class="note"><b>Limits.</b> The real two-day stream has no drift worth acting on: retraining every chunk does not beat the frozen model, so here the monitor's value is the retraining it saves. The three shifts are controlled stress tests. On the harmful shift, PSI performs the same as our trigger; its weakness is the false alarms on irrelevant fields. Explanation shift as a measure comes from Mougan et al. (2023); our contribution is using it as a retraining trigger for fraud detection under delayed labels, with a label guard and a full baseline comparison.</p>
+  </div>
+</section>
+
+<section id="figures">
+  <h2><span class="n">06</span>Result figures</h2>
+  <p>Generated by <span class="mono">run_experiments.py</span> and <span class="mono">run_novelty.py</span> on the full ULB dataset.</p>
+  <div class="figs">
+    <figure class="wide"><img src="../results/figures/novelty_drift_timeline.png" alt="Novelty: per-chunk PR-AUC and drift signals for the four streams" loading="lazy"><figcaption>Novelty: label-free monitoring of the four streams. Red dotted lines are retrains of the proposed model.</figcaption></figure>
+    <figure class="wide"><img src="../results/figures/novelty_tradeoff.png" alt="Novelty: PR-AUC after the shift against number of retrains" loading="lazy"><figcaption>Novelty: detection quality against retraining cost. Up and left is better.</figcaption></figure>
+    <figure class="wide"><img src="../results/figures/novelty_drift_attribution.png" alt="Novelty: features that carried the drift score" loading="lazy"><figcaption>Novelty: which features carried the explanation-drift score in the first chunk after the shift.</figcaption></figure>
+    <figure class="wide"><img src="../results/figures/pr_roc_curves.png" alt="Precision-recall and ROC curves on the test period" loading="lazy"><figcaption>Precision-recall and ROC curves on the test period.</figcaption></figure>
+    <figure><img src="../results/figures/ablation_temporal.png" alt="Static versus static plus temporal features" loading="lazy"><figcaption>H1: static vs static + temporal features.</figcaption></figure>
+    <figure><img src="../results/figures/split_comparison.png" alt="Random versus chronological split" loading="lazy"><figcaption>H3: random split vs chronological split.</figcaption></figure>
+    <figure><img src="../results/figures/history_window.png" alt="LSTM and GRU history window" loading="lazy"><figcaption>LSTM / GRU: PR-AUC against history window k.</figcaption></figure>
+    <figure><img src="../results/figures/drift.png" alt="PR-AUC by test window" loading="lazy"><figcaption>Drift: PR-AUC in the early, middle and late test windows.</figcaption></figure>
+    <figure><img src="../results/figures/shap_summary.png" alt="SHAP summary plot" loading="lazy"><figcaption>SHAP global: how each feature pushes the fraud score.</figcaption></figure>
+    <figure><img src="../results/figures/shap_local_waterfall.png" alt="SHAP waterfall for one flagged transaction" loading="lazy"><figcaption>SHAP local: why one transaction was flagged.</figcaption></figure>
+    <figure><img src="../results/figures/confusion_final.png" alt="Confusion matrix of the final model" loading="lazy"><figcaption>Final model (XGBoost) on the test period, max-F1 threshold.</figcaption></figure>
+    <figure><img src="../results/figures/fraud_over_time.png" alt="Transactions and fraud per hour" loading="lazy"><figcaption>Transaction volume and fraud over the 48 hours.</figcaption></figure>
+    <figure><img src="../results/figures/all_models_pr_auc.png" alt="Test PR-AUC for all models" loading="lazy"><figcaption>Test PR-AUC of every model.</figcaption></figure>
+    <figure><img src="../results/figures/class_balance.png" alt="Class imbalance" loading="lazy"><figcaption>Class imbalance: 0.172 % fraud.</figcaption></figure>
+  </div>
+</section>
+
+<section id="benchmarks">
+  <h2><span class="n">07</span>Verified public benchmark results (ULB dataset)</h2>
   <p>Public, reproducible 2026 benchmark runs on the real dataset. These are reported as external benchmark evidence, not as a fresh training run of this project.</p>
   <div class="tablewrap"><table>
     <thead><tr><th>Model</th><th class="r">Precision</th><th class="r">Recall</th><th class="r">F1</th><th class="r">ROC-AUC</th><th class="r">PR-AUC</th><th>Status</th></tr></thead>
@@ -233,7 +325,7 @@ ul{margin:0;padding-left:20px} li{margin:3px 0}
       <tr><td>MLP</td><td class="num">82.76%</td><td class="num">75.79%</td><td class="num">0.7912</td><td class="num">0.9365</td><td class="num">0.6838</td><td><span class="pill ok">verified</span></td></tr>
       <tr><td>XGBoost (time-ordered)</td><td class="num">93.00%</td><td class="num">71.60%</td><td class="num">0.8090</td><td class="num">0.9840</td><td class="num">0.7940</td><td><span class="pill ok">verified</span></td></tr>
       <tr><td>LightGBM</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td><span class="pill ok">ours: 0.8003</span></td></tr>
-      <tr><td>LSTM / GRU</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td><span class="pill ok">ours: 0.800 / 0.805</span></td></tr>
+      <tr><td>LSTM / GRU</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td><span class="pill ok">ours: 0.787 / 0.795 (k=5)</span></td></tr>
     </tbody>
   </table></div>
   <div class="grid2">
@@ -266,22 +358,23 @@ ul{margin:0;padding-left:20px} li{margin:3px 0}
   </div>
 </section>
 
-<section>
-  <h2><span class="n">06</span>Hypotheses</h2>
+<section id="hypotheses">
+  <h2><span class="n">08</span>Hypotheses</h2>
   <div class="tablewrap"><table>
     <thead><tr><th>#</th><th>Hypothesis</th><th>Evidence so far</th></tr></thead>
     <tbody>
       <tr><td class="mono">H1</td><td style="white-space:normal">Leakage-safe temporal features improve PR-AUC / recall over static features.</td><td><span class="pill mid">small gain on ULB (no card IDs)</span></td></tr>
-      <tr><td class="mono">H2</td><td style="white-space:normal">LSTM/GRU add value when valid entity histories exist.</td><td><span class="pill mid">comparable to trees (GRU 0.805)</span></td></tr>
+      <tr><td class="mono">H2</td><td style="white-space:normal">LSTM/GRU add value when valid entity histories exist.</td><td><span class="pill mid">comparable to trees (GRU 0.795)</span></td></tr>
       <tr><td class="mono">H3</td><td style="white-space:normal">Chronological evaluation shows more degradation than random evaluation.</td><td><span class="pill ok">supported (0.866 vs 0.793)</span></td></tr>
       <tr><td class="mono">H4</td><td style="white-space:normal">PR-AUC is a better selection signal than accuracy or ROC-AUC.</td><td><span class="pill ok">supported (RF: low ROC, high PR)</span></td></tr>
       <tr><td class="mono">H5</td><td style="white-space:normal">Best model by AUC is not always best at a practical false-positive limit.</td><td><span class="pill ok">supported</span></td></tr>
+      <tr class="best"><td class="mono">H6</td><td style="white-space:normal"><b>Novelty.</b> Monitoring SHAP explanations of unlabelled traffic decides when to retrain better than input drift or a fixed schedule.</td><td><span class="pill ok">supported on controlled shifts; no false alarms</span></td></tr>
     </tbody>
   </table></div>
 </section>
 
-<section>
-  <h2><span class="n">07</span>Datasets, models and imbalance handling</h2>
+<section id="datasets">
+  <h2><span class="n">09</span>Datasets, models and imbalance handling</h2>
   <div class="grid2">
     <div class="card">
       <h3>Datasets</h3>
@@ -324,8 +417,8 @@ ul{margin:0;padding-left:20px} li{margin:3px 0}
   </div>
 </section>
 
-<section>
-  <h2><span class="n">08</span>Metrics</h2>
+<section id="metrics">
+  <h2><span class="n">10</span>Metrics</h2>
   <div class="tablewrap"><table>
     <thead><tr><th>Metric</th><th>Formula</th><th>Meaning</th></tr></thead>
     <tbody>
@@ -339,17 +432,17 @@ ul{margin:0;padding-left:20px} li{margin:3px 0}
   </table></div>
 </section>
 
-<section>
-  <h2><span class="n">09</span>Limitations, ethics and future work</h2>
+<section id="limits">
+  <h2><span class="n">11</span>Limitations, ethics and future work</h2>
   <div class="grid3">
     <div class="card"><h3>Limitations</h3><ul class="note"><li>ULB features are anonymized PCA components.</li><li>Only 2 days of data, so long-term drift is limited.</li><li>No customer IDs on ULB.</li><li>Benchmarks come from different pipelines.</li><li>SHAP shows attribution, not causality.</li></ul></div>
     <div class="card"><h3>Ethics</h3><ul class="note"><li>False positives block real customers.</li><li>The model supports a human reviewer and does not decide alone.</li><li>Public anonymized data only.</li></ul></div>
-    <div class="card"><h3>Future work</h3><ul class="note"><li>Temporal graph neural networks</li><li>Transformer sequence models</li><li>Online learning for drift</li><li>Cost-sensitive learning</li><li>Federated, privacy-preserving training</li></ul></div>
+    <div class="card"><h3>Future work</h3><ul class="note"><li>Temporal graph neural networks</li><li>Transformer sequence models</li><li>Online learning for drift (started: see the novelty)</li><li>Cost-sensitive learning</li><li>Federated, privacy-preserving training</li></ul></div>
   </div>
 </section>
 
-<section>
-  <h2><span class="n">10</span>Viva quick answers</h2>
+<section id="viva">
+  <h2><span class="n">12</span>Viva quick answers</h2>
   <div class="qa">
     <details><summary>Why not use accuracy?</summary><p>With 0.172% fraud, predicting "legit" for everything gives 99.83% accuracy and catches nothing. PR-AUC, recall and precision focus on the rare fraud class.</p></details>
     <details><summary>What is data leakage here?</summary><p>Any information from validation/test or from the future reaching training: random splits that train on later transactions, fitting the scaler or SMOTE on all data, or choosing the threshold on the test set.</p></details>
@@ -357,9 +450,13 @@ ul{margin:0;padding-left:20px} li{margin:3px 0}
     <details><summary>Why is PR-AUC better than ROC-AUC here?</summary><p>ROC-AUC uses the false positive rate, whose denominator is the huge number of legitimate transactions, so many false alarms still look small. PR-AUC uses precision, which directly shows how many alerts are false.</p></details>
     <details><summary>Why not just use 0.5 as threshold?</summary><p>Probabilities are skewed under imbalance and the right threshold depends on business cost (review capacity vs missed fraud). We tune it on validation data. The XGBoost benchmark selected 0.266.</p></details>
     <details><summary>What is SHAP?</summary><p>SHapley Additive exPlanations: game-theory based attribution that splits a prediction into contributions from each feature. Global view: which features matter overall. Local view: why this one transaction was flagged.</p></details>
-    <details><summary>How did you use LSTM/GRU on ULB?</summary><p>Each sample is the window of the last k transactions (k = 5, 10, 20, 50) in time order, and the label is the last one. ULB has no card IDs, so the window is the global stream; GRU reached PR-AUC 0.805, similar to tree models. Per-card sequences need IEEE-CIS. GRU is a lighter LSTM with fewer gates.</p></details>
+    <details><summary>How did you use LSTM/GRU on ULB?</summary><p>Each sample is the window of the last k transactions (k = 5, 10, 20, 50) in time order, and the label is the last one. ULB has no card IDs, so the window is the global stream; at the window chosen on validation (k=5), GRU reached test PR-AUC 0.795 and LSTM 0.787, similar to tree models. Per-card sequences need IEEE-CIS. GRU is a lighter LSTM with fewer gates.</p></details>
     <details><summary>What is concept drift?</summary><p>Fraud patterns and customer behavior change over time, so a model trained on old data degrades. We test it by evaluating early, middle and late windows separately. Try the drift slider in the prototype.</p></details>
-    <details><summary>What is your contribution if temporal fraud detection already exists?</summary><p>A controlled, reproducible comparison that measures how much temporal and behavioral information adds over strong baselines, under strict leakage-free chronological evaluation, with explainability and false-positive constraints.</p></details>
+    <details><summary>What is your contribution if temporal fraud detection already exists?</summary><p>Two things. First, a controlled, reproducible comparison that measures how much temporal and behavioral information adds over strong baselines, under strict leakage-free chronological evaluation, with explainability and false-positive constraints. Second, the novelty: a model that monitors its own SHAP explanations on unlabelled traffic and decides when to retrain, with a delayed-label guard.</p></details>
+    <details><summary>What exactly is new in the novelty?</summary><p>Explanation shift as a measure was proposed by Mougan et al. (2023). We use it as a retraining trigger for fraud detection under delayed labels. We add alarm-then-adapt retraining and a binomial delayed-label guard. We test it against a frozen model, periodic retraining, a PSI trigger and random retrain timing, on real, harmless, harmful and concept-drift streams.</p></details>
+    <details><summary>Why not just retrain every day?</summary><p>On the real stream, retraining every chunk (22 times) gave 0.793 PR-AUC against 0.799 for never retraining, so it cost compute for nothing. On the harmful shift, our 5 well-timed retrains (0.768) matched retraining every chunk (0.766), and 5 retrains at random times reached only 0.745.</p></details>
+    <details><summary>Why is SHAP drift better than input drift (PSI)?</summary><p>PSI reacts to any change in the inputs, including fields the model ignores. After the harmless shift, PSI raised an alarm on every chunk and retrained 5 times; the SHAP monitor stayed quiet. SHAP drift weighs each change by how much the model relies on that feature, and each alarm names the features responsible.</p></details>
+    <details><summary>What can your monitor not see?</summary><p>A change that only affects the rare fraud rows, such as the sign flip: the unlabelled data looks normal, so no label-free monitor can see it. That is why we added the delayed-label guard. It fired 2 chunks after the flip and recovered PR-AUC from 0.001 to 0.618.</p></details>
   </div>
 </section>
 
@@ -368,6 +465,9 @@ ul{margin:0;padding-left:20px} li{margin:3px 0}
 
 <script>
 /*ENGINE*/
+</script>
+<script>
+/*NOVELTY_JS*/
 </script>
 <script>
 (() => {

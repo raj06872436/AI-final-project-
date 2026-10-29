@@ -1,0 +1,31 @@
+{
+  "seeds": [
+    42,
+    7,
+    2024
+  ],
+  "chunks": 24,
+  "label_delay_chunks": 1,
+  "onset_chunk": 8,
+  "stream_rows": 113491,
+  "stream_frauds": 131,
+  "most_important": [
+    "V14",
+    "V4",
+    "V12"
+  ],
+  "least_important": [
+    "amt_z_100",
+    "V27",
+    "cnt_600s",
+    "V15",
+    "V2",
+    "cnt_60s",
+    "cnt_10s",
+    "hour_cos",
+    "log_gap_next_prev",
+    "amt_rank_100"
+  ],
+  "explanation_threshold_initial": 0.34744645319793177,
+  "runtime_minutes": 101.91896216869354
+}

@@ -64,3 +64,61 @@ def fraud_over_time(df, path):
     ax.set(xlabel="Hour since start", ylabel="Transactions"); ax2.set_ylabel("Fraud")
     ax.set_title("Transaction volume and fraud over the 48-hour period")
     fig.tight_layout(); fig.savefig(path); plt.close(fig)
+
+
+
+def novelty_timeline(frozen: dict, proposed: dict, onset, path):
+    """Per scenario: chunk PR-AUC (top) and label-free drift scores relative to their alarm threshold (bottom)."""
+    names = list(frozen)
+    fig, ax = plt.subplots(2, len(names), figsize=(4.2 * len(names), 6.5), sharex=True, sharey="row")
+    for j, s in enumerate(names):
+        fz, pr = frozen[s], proposed[s]
+        top, bot = ax[0, j], ax[1, j]
+        top.plot(fz.chunk, fz.pr_auc.rolling(3, min_periods=1).mean(), c="#8C8C8C", label="Frozen model")
+        top.plot(pr.chunk, pr.pr_auc.rolling(3, min_periods=1).mean(), c="#C44E52", label="Proposed (SHAP drift + label guard)")
+        for c in pr.chunk[pr.retrained_after]:
+            top.axvline(c + 0.5, c="#C44E52", ls=":", lw=0.8)
+        bot.plot(fz.chunk, fz.explanation_drift / fz.explanation_threshold, marker="o", ms=3, c="#C44E52",
+                 label="Explanation drift (SHAP)")
+        bot.plot(fz.chunk, fz.input_drift / fz.input_threshold, marker="s", ms=3, c="#4C72B0", label="Input drift (PSI)")
+        bot.axhline(1, c="k", ls="--", lw=1, label="Alarm threshold")
+        for a in (top, bot):
+            if s != "real":
+                a.axvline(onset - 0.5, c="grey", lw=1)
+        top.set_title(f"{s} stream"); bot.set_xlabel("Chunk (~36 min each)")
+    ax[0, 0].set_ylabel("Chunk PR-AUC (3-chunk mean)"); ax[1, 0].set_ylabel("Drift score / threshold")
+    ax[0, 0].legend(fontsize=7); ax[1, 0].legend(fontsize=7)
+    fig.suptitle("Label-free monitoring of the stream (dotted red = retrain fired; grey = shift onset)")
+    fig.tight_layout(); fig.savefig(path); plt.close(fig)
+
+
+def novelty_tradeoff(table, path):
+    """Post-onset PR-AUC versus number of retrains, one panel per scenario."""
+    scen = list(dict.fromkeys(table.scenario))
+    strategies = list(dict.fromkeys(table.strategy))
+    style = {st: (m, c) for st, m, c in zip(strategies, "osD^vP*X",
+                                              ["#8C8C8C", "#4C72B0", "#55A868", "#8172B2", "#C44E52", "#DD8452", "#CCB974"])}
+    fig, ax = plt.subplots(1, len(scen), figsize=(4.2 * len(scen), 4.3))
+    for a, s in zip(np.atleast_1d(ax), scen):
+        for _, r in table[table.scenario == s].iterrows():
+            m, c = style[r.strategy]
+            a.scatter(r.retrains, r.post_onset_pr_auc, marker=m, c=c, s=110 if "(proposed)" in r.strategy else 55,
+                      edgecolors="k" if "(proposed)" in r.strategy else "none", label=r.strategy, zorder=3, alpha=.9)
+        a.set(title=f"{s} stream", xlabel="Retrains", ylabel="PR-AUC after onset")
+    h, l = np.atleast_1d(ax)[0].get_legend_handles_labels()
+    fig.legend(h, l, loc="lower center", ncol=4, fontsize=8, frameon=False)
+    fig.suptitle("Detection quality vs retraining cost (up and left is better)")
+    fig.tight_layout(rect=(0, 0.12, 1, 1)); fig.savefig(path); plt.close(fig)
+
+
+def novelty_attribution(attr: dict, threshold, path, top=8):
+    """Each feature's contribution to the explanation-drift score in the first chunk after the shift."""
+    names = [s for s in attr if s != "flip"]
+    fig, ax = plt.subplots(1, len(names), figsize=(4.2 * len(names), 4), sharex=True)
+    for a, s in zip(ax, names):
+        v = attr[s].head(top)[::-1]
+        a.barh(v.index, v.values, color="#C44E52")
+        a.set(title=f"{s} stream: score {attr[s].sum():.2f} (alarm > {threshold:.2f})",
+              xlabel="Contribution to explanation-drift score")
+    fig.suptitle("Explaining the drift alarm: where the model's reasoning changed")
+    fig.tight_layout(); fig.savefig(path); plt.close(fig)

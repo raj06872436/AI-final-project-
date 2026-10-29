@@ -1,0 +1,9 @@
+scenario,signal,alarms_before_onset,alarms_after_onset,detection_delay_chunks
+real,Explanation drift (SHAP),0,0,never
+real,Input drift (PSI),0,0,never
+harmless,Explanation drift (SHAP),0,0,never
+harmless,Input drift (PSI),0,16,0
+harmful,Explanation drift (SHAP),0,16,0
+harmful,Input drift (PSI),0,14,0
+flip,Explanation drift (SHAP),0,0,never
+flip,Input drift (PSI),0,0,never
