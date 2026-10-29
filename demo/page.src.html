@@ -206,17 +206,17 @@ ul{margin:0;padding-left:20px} li{margin:3px 0}
       <tr><td>XGBoost (final, chosen on validation)</td><td class="num">0.7929</td><td class="num">0.9733</td><td class="num">0.896</td><td class="num">0.739</td><td class="num">0.810</td></tr>
       <tr><td>LightGBM</td><td class="num">0.8003</td><td class="num">0.9838</td><td class="num">0.907</td><td class="num">0.743</td><td class="num">0.817</td></tr>
       <tr><td>MLP</td><td class="num">0.7935</td><td class="num">0.9671</td><td class="num">0.835</td><td class="num">0.725</td><td class="num">0.775</td></tr>
-      <tr><td>LSTM (k=10)</td><td class="num">0.8002</td><td class="num">0.9594</td><td class="num">0.979</td><td class="num">0.635</td><td class="num">0.771</td></tr>
-      <tr><td>GRU (k=20)</td><td class="num">0.8054</td><td class="num">0.9830</td><td class="num">0.981</td><td class="num">0.703</td><td class="num">0.819</td></tr>
+      <tr><td>LSTM (k=5, chosen on validation)</td><td class="num">0.7867</td><td class="num">0.9767</td><td class="num">0.958</td><td class="num">0.622</td><td class="num">0.754</td></tr>
+      <tr><td>GRU (k=5, chosen on validation)</td><td class="num">0.7950</td><td class="num">0.9820</td><td class="num">0.927</td><td class="num">0.689</td><td class="num">0.791</td></tr>
     </tbody>
   </table></div>
   <div class="grid3">
     <div class="card"><h3>H3: random split is optimistic</h3><p class="note">XGBoost PR-AUC <b class="mono">0.866</b> on a random split vs <b class="mono">0.793</b> on the chronological split. Random Forest 0.855 vs 0.817.</p></div>
     <div class="card"><h3>H1: temporal features</h3><p class="note">Small, mixed gain: XGBoost 0.793 → 0.797, LightGBM 0.800 → 0.803, RF 0.817 → 0.814. ULB has no card ID, so features describe the global stream only.</p></div>
     <div class="card"><h3>H5: threshold matters</h3><p class="note">Final model: max-F1 threshold catches 55/74 with 7 false alarms; min-cost catches 58 with 41; 85% recall target catches 64 with 478.</p></div>
-    <div class="card"><h3>History window</h3><p class="note">GRU PR-AUC rises from k=5 (0.795) to k=20 (0.805), then levels off at k=50.</p></div>
+    <div class="card"><h3>History window</h3><p class="note">Test PR-AUC for GRU rises from k=5 (0.795) to k=20 (0.805), then levels off at k=50. The window is still chosen on validation (k=5), never on test.</p></div>
     <div class="card"><h3>Drift</h3><p class="note">All models lose PR-AUC in the last third of the test period (XGBoost 0.84 → 0.53, only 12 frauds there).</p></div>
-    <div class="card"><h3>SHAP</h3><p class="note">Top features: V4, V14, V12, V11, V10, the same set the public benchmark reports.</p></div>
+    <div class="card"><h3>SHAP</h3><p class="note">Explained model: XGBoost (+temporal), so the temporal features can be inspected. Top features: V4, V14, V12, V11, V10, the same set the public benchmark reports.</p></div>
   </div>
 </section>
 

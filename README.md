@@ -65,26 +65,26 @@ temporal features → models (scaling and SMOTE inside pipelines, fit on train o
 | XGBoost | 0.7929 | 0.9733 | 0.896 | 0.739 | 0.810 |
 | LightGBM | 0.8003 | 0.9838 | 0.907 | 0.743 | 0.817 |
 | MLP | 0.7935 | 0.9671 | 0.835 | 0.725 | 0.775 |
-| LSTM (k=10) * | 0.8002 | 0.9594 | 0.979 | 0.635 | 0.771 |
-| GRU (k=20) * | 0.8054 | 0.9830 | 0.981 | 0.703 | 0.819 |
+| LSTM (k=5) * | 0.7867 | 0.9767 | 0.958 | 0.622 | 0.754 |
+| GRU (k=5) * | 0.7950 | 0.9820 | 0.927 | 0.689 | 0.791 |
 
-\* single seed. The final model chosen on **validation** PR-AUC is XGBoost (test: 55 of 74 frauds caught, 7 false alarms).
+\* single seed; history window k chosen on validation PR-AUC (all windows: [`results/sequence_models.csv`](results/sequence_models.csv)). The final model chosen on **validation** PR-AUC is XGBoost (test: 55 of 74 frauds caught, 7 false alarms).
 
 ## Findings for each hypothesis
 
 | | Result |
 |---|---|
 | **H1** temporal features help | **Small / mixed.** PR-AUC XGBoost 0.793 → 0.797, LightGBM 0.800 → 0.803, LR 0.745 → 0.750; RF 0.817 → 0.814. On ULB the temporal features describe the global stream because there is no card ID, so most of the signal is already in V1–V28. |
-| **H2** LSTM/GRU add value | **Comparable, not better.** GRU reaches 0.795–0.805 PR-AUC, similar to tree models; LSTM 0.787–0.800. Gains need real per-card sequences (IEEE-CIS). |
+| **H2** LSTM/GRU add value | **Comparable, not better.** At the validation-chosen window (k=5) GRU scores 0.795 and LSTM 0.787 test PR-AUC, similar to the tree models; across all windows GRU ranges 0.795–0.805 and LSTM 0.787–0.800. Gains need real per-card sequences (IEEE-CIS). |
 | **H3** random split is optimistic | **Supported.** XGBoost PR-AUC 0.866 on a random split vs 0.793 chronological; RF 0.855 vs 0.817. |
 | **H4** PR-AUC > accuracy / ROC-AUC | **Supported.** "All legit" scores 99.83 % accuracy with 0 recall. RF has the lowest ROC-AUC (0.961) of the tree models but the highest PR-AUC (0.817). |
 | **H5** best AUC ≠ best operating point | **Supported.** For the final model, the max-F1 threshold catches 55 frauds with 7 false alarms; the min-cost threshold catches 58 with 41; a ≥85 % recall target catches 64 but raises 478 alarms. |
 
 **Other results**
-- **History window:** for GRU, PR-AUC rises from k=5 (0.795) to k=20 (0.805) and then levels off at k=50 (0.803).
+- **History window:** for GRU, test PR-AUC rises from k=5 (0.795) to k=20 (0.805) and then levels off at k=50 (0.803). Validation PR-AUC is flat (0.770–0.780) and picks k=5, so the test-period gain from longer windows is not used for selection.
 - **Class imbalance (XGBoost):** class weighting, SMOTE and no reweighting are within 0.001 PR-AUC of each other. Undersampling is the worst (0.784).
 - **Drift:** every model loses PR-AUC in the last third of the test period (XGBoost 0.84 → 0.53). That third contains only 12 frauds, so treat this as an indication rather than a firm result.
-- **SHAP:** the top features are V4, V14, V12, V11 and V10, which match the published benchmark.
+- **SHAP:** explained on XGBoost (+temporal), not the selected plain XGBoost, so that the temporal features can be inspected too. The two are close (3-seed mean test PR-AUC 0.793 vs 0.797). Top features: V4, V14, V12, V11 and V10, which match the published benchmark.
 
 ## Figures
 
