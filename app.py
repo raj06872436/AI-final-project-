@@ -23,7 +23,7 @@ R, F = C.RESULTS_DIR, C.FIG_DIR
 
 @st.cache_data
 def table(name):
-    return pd.read_csv(R / name)
+    return pd.read_csv(R / name, keep_default_na=False)  # keep the "None" imbalance strategy as text
 
 
 @st.cache_resource
