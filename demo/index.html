@@ -6,15 +6,15 @@
 /* Layout: single reading column (max 1080px), sections as numbered report chapters, demo as a two-pane instrument panel */
 :root{
   --bg:#f5f7fb; --surface:#ffffff; --ink:#141a2b; --muted:#5b6478; --line:#dfe3ec;
-  --accent:#2747d6; --accent-soft:#e6ebff; --fraud:#c7362f; --fraud-soft:#fbe7e5; --ok:#1f8a5b; --ok-soft:#e1f4ea; --warn:#a86a00;
+  --accent:#2747d6; --accent-soft:#e6ebff; --fraud:#c7362f; --fraud-soft:#fbe7e5; --ok:#1f8a5b; --ok-soft:#e1f4ea; --warn:#a86a00; --prop:#0b7f7a; --prop-soft:#dcf2f0;
   --display:"Archivo",system-ui,sans-serif; --body:"IBM Plex Sans",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,monospace;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#0e1220; --surface:#161b2c; --ink:#e7eaf3; --muted:#9aa3b8; --line:#2a3148;
-  --accent:#8199ff; --accent-soft:#1f2850; --fraud:#ff7a70; --fraud-soft:#3a1d1f; --ok:#4fd18f; --ok-soft:#14301f; --warn:#e8b14a; color-scheme:dark}}
+  --accent:#8199ff; --accent-soft:#1f2850; --fraud:#ff7a70; --fraud-soft:#3a1d1f; --ok:#4fd18f; --ok-soft:#14301f; --warn:#e8b14a; --prop:#3fd0c4; --prop-soft:#123533; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#0e1220; --surface:#161b2c; --ink:#e7eaf3; --muted:#9aa3b8; --line:#2a3148;
-  --accent:#8199ff; --accent-soft:#1f2850; --fraud:#ff7a70; --fraud-soft:#3a1d1f; --ok:#4fd18f; --ok-soft:#14301f; --warn:#e8b14a; color-scheme:dark}
+  --accent:#8199ff; --accent-soft:#1f2850; --fraud:#ff7a70; --fraud-soft:#3a1d1f; --ok:#4fd18f; --ok-soft:#14301f; --warn:#e8b14a; --prop:#3fd0c4; --prop-soft:#123533; color-scheme:dark}
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.6}
 .wrap{max-width:1080px;margin:0 auto;padding-block:32px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:56px}
@@ -82,16 +82,40 @@ details summary{cursor:pointer;font-weight:600}
 details p{margin-top:8px;color:var(--muted)}
 .qa{display:flex;flex-direction:column;gap:8px}
 ul{margin:0;padding-left:20px} li{margin:3px 0}
+.topnav{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line);margin-inline:calc(-1*max(16px,env(safe-area-inset-left,0px)));padding:8px max(16px,env(safe-area-inset-left,0px));display:flex;gap:6px 14px;flex-wrap:wrap;font-size:13px}
+.topnav a{color:var(--muted);text-decoration:none;font-weight:500}.topnav a:hover,.topnav a:focus-visible{color:var(--accent)}
+.topnav a.nov{color:var(--prop);font-weight:700}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.segb{background:var(--surface);color:var(--ink);border:1px solid var(--line);font-weight:500}
+.segb[aria-selected="true"]{background:var(--prop);border-color:var(--prop);color:var(--surface)}
+.replay-head{display:flex;flex-direction:column;gap:10px}
+.race{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.lane{border:1px solid var(--line);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;gap:2px;border-top:4px solid var(--muted)}
+.lane.psi{border-top-color:var(--accent)} .lane.prop{border-top-color:var(--prop);background:var(--prop-soft)}
+.lane b{font-family:var(--mono);font-size:22px;font-weight:500}
+.lname{font-size:12.5px;font-weight:600}.lsub{font-size:12px;color:var(--muted)}
+.charts .card{gap:6px}
+.log{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:13.5px}
+.ev{display:grid;grid-template-columns:42px 1fr;gap:8px;padding:6px 8px;border-radius:6px;background:var(--bg)}
+.ev.prop{background:var(--prop-soft)} .ev.psi{background:var(--accent-soft)} .ev .mono{color:var(--muted)}
+.figs{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+figure{margin:0;background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:6px;min-width:0}
+figure.wide{grid-column:1/-1}
+figure img{width:100%;height:auto;display:block}
+figcaption{font-size:12.5px;color:#4a5263}
+@media (max-width:760px){.race,.figs{grid-template-columns:1fr}}
 @media (max-width:760px){.grid2,.grid3{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}.metrics{grid-template-columns:repeat(2,1fr)}.bar{grid-template-columns:100px 1fr 48px}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 
 <div class="wrap">
+<nav class="topnav" aria-label="Sections"><a href="#problem">Problem</a><a href="#pipeline">Pipeline</a><a href="#demo">Prototype</a><a href="#results">Results</a><a class="nov" href="#novelty">Novelty</a><a href="#figures">Figures</a><a href="#hypotheses">Hypotheses</a><a href="#limits">Limits</a><a href="#viva">Viva Q&amp;A</a></nav>
 
 <header class="hero">
   <div class="eyebrow">AI Laboratory · T.Y. B.Tech Information Technology · Research Project</div>
   <h1>Temporal and Explainable Machine Learning for Early Financial Fraud Detection</h1>
-  <p class="lede">A leakage-free comparison of transaction-level, temporal and behavioral models. This page walks through the problem, the method, a working in-browser prototype, the verified benchmark results and the research plan.</p>
+  <p class="lede">A leakage-free comparison of transaction-level, temporal and behavioral models. This page walks through the problem, the method, a working in-browser prototype, our results on the real dataset, and our novelty: a model that monitors its own SHAP explanations to decide when to retrain.</p>
   <div class="stats">
     <div class="stat"><b>284,807</b><span>transactions in ULB European dataset</span></div>
     <div class="stat alert"><b>492</b><span>fraud cases</span></div>
@@ -100,7 +124,7 @@ ul{margin:0;padding-left:20px} li{margin:3px 0}
   </div>
 </header>
 
-<section>
+<section id="problem">
   <h2><span class="n">01</span>Problem and why it is hard</h2>
   <p><b>Problem statement.</b> Develop and evaluate a leakage-free ML framework for financial fraud detection that compares transaction-level models with temporal and behavioral models, and explains individual fraud predictions.</p>
   <div class="grid3">
@@ -110,7 +134,7 @@ ul{margin:0;padding-left:20px} li{margin:3px 0}
   </div>
 </section>
 
-<section>
+<section id="pipeline">
   <h2><span class="n">02</span>Pipeline</h2>
   <div class="pipeline">
     <span class="step">Raw transactions</span><span class="arrow">→</span>
@@ -193,7 +217,7 @@ ul{margin:0;padding-left:20px} li{margin:3px 0}
   </div>
 </section>
 
-<section>
+<section id="results">
   <h2><span class="n">04</span>Our results on the real ULB dataset</h2>
   <p>Produced by <span class="mono">run_experiments.py</span> on all 284,807 transactions: 1,081 duplicates removed, chronological 60/20/20 split (test = hours 40.3–48.0, 74 frauds), threshold tuned on validation, 3 seeds.</p>
   <div class="tablewrap"><table>
@@ -220,8 +244,76 @@ ul{margin:0;padding-left:20px} li{margin:3px 0}
   </div>
 </section>
 
-<section>
-  <h2><span class="n">05</span>Verified public benchmark results (ULB dataset)</h2>
+<section id="novelty">
+  <h2><span class="n">05</span>Novelty: a model that knows when to retrain</h2>
+  <p class="lede">Fraud labels arrive late, so a deployed model cannot tell from labels alone that it has started failing. Our model watches its own <b>SHAP explanations</b> of new, still-unlabelled transactions. When the way it reasons about the stream changes, it retrains. When only fields it ignores change, it stays quiet. Each alarm also names the features that caused it.</p>
+  <div class="grid3">
+    <div class="card"><span class="eyebrow">Step 1 · label-free</span><h3>Explanation-drift score</h3><p class="note">For every chunk of new transactions, measure how far the SHAP attributions have moved from the most recent training data: <span class="mono">D = Σ W1(SHAP<sub>ref</sub>, SHAP<sub>now</sub>) / Σ E|SHAP<sub>ref</sub>|</span>. The alarm threshold is the 90th percentile of D on earlier training chunks, so no labels and no future data are used.</p></div>
+    <div class="card"><span class="eyebrow">Step 2 · delayed labels</span><h3>Alarm, then adapt</h3><p class="note">Retraining right after an alarm does not help, because the drifted chunk's labels are not known yet. An alarm opens a 4-chunk window in which the model retrains each time new labels arrive.</p></div>
+    <div class="card"><span class="eyebrow">Step 3 · safety net</span><h3>Delayed-label guard</h3><p class="note">When a chunk's labels arrive and the model caught significantly fewer than half of its frauds (one-sided binomial test, α = 0.05), that also raises an alarm. This catches fraud that changes while the data still looks normal.</p></div>
+  </div>
+
+  <div class="panel" id="replay">
+    <div class="replay-head">
+      <div class="seg" role="tablist" aria-label="Stream scenario">
+        <button class="segb" data-s="real" role="tab">Real stream</button>
+        <button class="segb" data-s="harmless" role="tab">Harmless shift</button>
+        <button class="segb" data-s="harmful" role="tab">Harmful shift</button>
+        <button class="segb" data-s="flip" role="tab">Silent fraud flip</button>
+      </div>
+      <p class="note" id="scenDesc"></p>
+    </div>
+    <div class="controls">
+      <button id="play">▶ Play stream</button>
+      <button class="ghost" id="stepB">Step one chunk</button>
+      <div class="ctl"><label for="cur">Chunk <output id="curV"></output></label><input id="cur" type="range" min="0" max="23" step="1" value="23"></div>
+    </div>
+    <div class="race">
+      <div class="lane frozen"><span class="lname">Frozen model</span><b id="cFrozen"></b><span class="lsub" id="rFrozen"></span></div>
+      <div class="lane psi"><span class="lname">PSI input-drift trigger</span><b id="cPsi"></b><span class="lsub" id="rPsi"></span></div>
+      <div class="lane prop"><span class="lname">Proposed (SHAP drift + label guard)</span><b id="cProp"></b><span class="lsub" id="rProp"></span></div>
+    </div>
+    <div class="grid2 charts">
+      <div class="card"><h3>Detection quality per chunk</h3><p class="note">PR-AUC on each chunk (3-chunk mean). Triangles mark retrains. Where lines overlap, the strategies scored the same.</p><svg id="qChart" viewBox="0 0 420 230" width="100%" role="img" aria-label="Per-chunk PR-AUC for each strategy"></svg></div>
+      <div class="card"><h3>Label-free drift signals</h3><p class="note">Measured on the frozen model: score divided by its alarm threshold. Above the dashed line means alarm.</p><svg id="dChart" viewBox="0 0 420 230" width="100%" role="img" aria-label="Drift scores relative to threshold"></svg></div>
+    </div>
+    <div class="grid2">
+      <div class="card"><h3>Event log</h3><ol id="log" class="log"></ol></div>
+      <div class="card"><h3>Why the alarm fired</h3><p class="note" id="attrNote"></p><div id="attrBars" class="bars"></div></div>
+    </div>
+  </div>
+
+  <h3>Results over 3 seeds</h3><p class="note">PR-AUC from chunk 8 on, where the shifts start. Retrains in brackets.</p>
+  <div class="tablewrap"><table id="novTable"></table></div>
+  <div class="grid2">
+    <p class="callout">On the harmful shift, 5 well-timed retrains (0.768) beat retraining every chunk (0.766 with 22 retrains). Retraining 5 times at random moments reaches only 0.745, so the timing comes from the monitor. When the fraud signature flips silently, only the label guard notices, and the model recovers from 0.001 to 0.618.</p>
+    <p class="note"><b>Limits.</b> The real two-day stream has no drift worth acting on: retraining every chunk does not beat the frozen model, so here the monitor's value is the retraining it saves. The three shifts are controlled stress tests. On the harmful shift, PSI performs the same as our trigger; its weakness is the false alarms on irrelevant fields. Explanation shift as a measure comes from Mougan et al. (2023); our contribution is using it as a retraining trigger for fraud detection under delayed labels, with a label guard and a full baseline comparison.</p>
+  </div>
+</section>
+
+<section id="figures">
+  <h2><span class="n">06</span>Result figures</h2>
+  <p>Generated by <span class="mono">run_experiments.py</span> and <span class="mono">run_novelty.py</span> on the full ULB dataset.</p>
+  <div class="figs">
+    <figure class="wide"><img src="../results/figures/novelty_drift_timeline.png" alt="Novelty: per-chunk PR-AUC and drift signals for the four streams" loading="lazy"><figcaption>Novelty: label-free monitoring of the four streams. Red dotted lines are retrains of the proposed model.</figcaption></figure>
+    <figure class="wide"><img src="../results/figures/novelty_tradeoff.png" alt="Novelty: PR-AUC after the shift against number of retrains" loading="lazy"><figcaption>Novelty: detection quality against retraining cost. Up and left is better.</figcaption></figure>
+    <figure class="wide"><img src="../results/figures/novelty_drift_attribution.png" alt="Novelty: features that carried the drift score" loading="lazy"><figcaption>Novelty: which features carried the explanation-drift score in the first chunk after the shift.</figcaption></figure>
+    <figure class="wide"><img src="../results/figures/pr_roc_curves.png" alt="Precision-recall and ROC curves on the test period" loading="lazy"><figcaption>Precision-recall and ROC curves on the test period.</figcaption></figure>
+    <figure><img src="../results/figures/ablation_temporal.png" alt="Static versus static plus temporal features" loading="lazy"><figcaption>H1: static vs static + temporal features.</figcaption></figure>
+    <figure><img src="../results/figures/split_comparison.png" alt="Random versus chronological split" loading="lazy"><figcaption>H3: random split vs chronological split.</figcaption></figure>
+    <figure><img src="../results/figures/history_window.png" alt="LSTM and GRU history window" loading="lazy"><figcaption>LSTM / GRU: PR-AUC against history window k.</figcaption></figure>
+    <figure><img src="../results/figures/drift.png" alt="PR-AUC by test window" loading="lazy"><figcaption>Drift: PR-AUC in the early, middle and late test windows.</figcaption></figure>
+    <figure><img src="../results/figures/shap_summary.png" alt="SHAP summary plot" loading="lazy"><figcaption>SHAP global: how each feature pushes the fraud score.</figcaption></figure>
+    <figure><img src="../results/figures/shap_local_waterfall.png" alt="SHAP waterfall for one flagged transaction" loading="lazy"><figcaption>SHAP local: why one transaction was flagged.</figcaption></figure>
+    <figure><img src="../results/figures/confusion_final.png" alt="Confusion matrix of the final model" loading="lazy"><figcaption>Final model (XGBoost) on the test period, max-F1 threshold.</figcaption></figure>
+    <figure><img src="../results/figures/fraud_over_time.png" alt="Transactions and fraud per hour" loading="lazy"><figcaption>Transaction volume and fraud over the 48 hours.</figcaption></figure>
+    <figure><img src="../results/figures/all_models_pr_auc.png" alt="Test PR-AUC for all models" loading="lazy"><figcaption>Test PR-AUC of every model.</figcaption></figure>
+    <figure><img src="../results/figures/class_balance.png" alt="Class imbalance" loading="lazy"><figcaption>Class imbalance: 0.172 % fraud.</figcaption></figure>
+  </div>
+</section>
+
+<section id="benchmarks">
+  <h2><span class="n">07</span>Verified public benchmark results (ULB dataset)</h2>
   <p>Public, reproducible 2026 benchmark runs on the real dataset. These are reported as external benchmark evidence, not as a fresh training run of this project.</p>
   <div class="tablewrap"><table>
     <thead><tr><th>Model</th><th class="r">Precision</th><th class="r">Recall</th><th class="r">F1</th><th class="r">ROC-AUC</th><th class="r">PR-AUC</th><th>Status</th></tr></thead>
@@ -266,8 +358,8 @@ ul{margin:0;padding-left:20px} li{margin:3px 0}
   </div>
 </section>
 
-<section>
-  <h2><span class="n">06</span>Hypotheses</h2>
+<section id="hypotheses">
+  <h2><span class="n">08</span>Hypotheses</h2>
   <div class="tablewrap"><table>
     <thead><tr><th>#</th><th>Hypothesis</th><th>Evidence so far</th></tr></thead>
     <tbody>
@@ -276,12 +368,13 @@ ul{margin:0;padding-left:20px} li{margin:3px 0}
       <tr><td class="mono">H3</td><td style="white-space:normal">Chronological evaluation shows more degradation than random evaluation.</td><td><span class="pill ok">supported (0.866 vs 0.793)</span></td></tr>
       <tr><td class="mono">H4</td><td style="white-space:normal">PR-AUC is a better selection signal than accuracy or ROC-AUC.</td><td><span class="pill ok">supported (RF: low ROC, high PR)</span></td></tr>
       <tr><td class="mono">H5</td><td style="white-space:normal">Best model by AUC is not always best at a practical false-positive limit.</td><td><span class="pill ok">supported</span></td></tr>
+      <tr class="best"><td class="mono">H6</td><td style="white-space:normal"><b>Novelty.</b> Monitoring SHAP explanations of unlabelled traffic decides when to retrain better than input drift or a fixed schedule.</td><td><span class="pill ok">supported on controlled shifts; no false alarms</span></td></tr>
     </tbody>
   </table></div>
 </section>
 
-<section>
-  <h2><span class="n">07</span>Datasets, models and imbalance handling</h2>
+<section id="datasets">
+  <h2><span class="n">09</span>Datasets, models and imbalance handling</h2>
   <div class="grid2">
     <div class="card">
       <h3>Datasets</h3>
@@ -324,8 +417,8 @@ ul{margin:0;padding-left:20px} li{margin:3px 0}
   </div>
 </section>
 
-<section>
-  <h2><span class="n">08</span>Metrics</h2>
+<section id="metrics">
+  <h2><span class="n">10</span>Metrics</h2>
   <div class="tablewrap"><table>
     <thead><tr><th>Metric</th><th>Formula</th><th>Meaning</th></tr></thead>
     <tbody>
@@ -339,17 +432,17 @@ ul{margin:0;padding-left:20px} li{margin:3px 0}
   </table></div>
 </section>
 
-<section>
-  <h2><span class="n">09</span>Limitations, ethics and future work</h2>
+<section id="limits">
+  <h2><span class="n">11</span>Limitations, ethics and future work</h2>
   <div class="grid3">
     <div class="card"><h3>Limitations</h3><ul class="note"><li>ULB features are anonymized PCA components.</li><li>Only 2 days of data, so long-term drift is limited.</li><li>No customer IDs on ULB.</li><li>Benchmarks come from different pipelines.</li><li>SHAP shows attribution, not causality.</li></ul></div>
     <div class="card"><h3>Ethics</h3><ul class="note"><li>False positives block real customers.</li><li>The model supports a human reviewer and does not decide alone.</li><li>Public anonymized data only.</li></ul></div>
-    <div class="card"><h3>Future work</h3><ul class="note"><li>Temporal graph neural networks</li><li>Transformer sequence models</li><li>Online learning for drift</li><li>Cost-sensitive learning</li><li>Federated, privacy-preserving training</li></ul></div>
+    <div class="card"><h3>Future work</h3><ul class="note"><li>Temporal graph neural networks</li><li>Transformer sequence models</li><li>Online learning for drift (started: see the novelty)</li><li>Cost-sensitive learning</li><li>Federated, privacy-preserving training</li></ul></div>
   </div>
 </section>
 
-<section>
-  <h2><span class="n">10</span>Viva quick answers</h2>
+<section id="viva">
+  <h2><span class="n">12</span>Viva quick answers</h2>
   <div class="qa">
     <details><summary>Why not use accuracy?</summary><p>With 0.172% fraud, predicting "legit" for everything gives 99.83% accuracy and catches nothing. PR-AUC, recall and precision focus on the rare fraud class.</p></details>
     <details><summary>What is data leakage here?</summary><p>Any information from validation/test or from the future reaching training: random splits that train on later transactions, fitting the scaler or SMOTE on all data, or choosing the threshold on the test set.</p></details>
@@ -359,7 +452,11 @@ ul{margin:0;padding-left:20px} li{margin:3px 0}
     <details><summary>What is SHAP?</summary><p>SHapley Additive exPlanations: game-theory based attribution that splits a prediction into contributions from each feature. Global view: which features matter overall. Local view: why this one transaction was flagged.</p></details>
     <details><summary>How did you use LSTM/GRU on ULB?</summary><p>Each sample is the window of the last k transactions (k = 5, 10, 20, 50) in time order, and the label is the last one. ULB has no card IDs, so the window is the global stream; GRU reached PR-AUC 0.805, similar to tree models. Per-card sequences need IEEE-CIS. GRU is a lighter LSTM with fewer gates.</p></details>
     <details><summary>What is concept drift?</summary><p>Fraud patterns and customer behavior change over time, so a model trained on old data degrades. We test it by evaluating early, middle and late windows separately. Try the drift slider in the prototype.</p></details>
-    <details><summary>What is your contribution if temporal fraud detection already exists?</summary><p>A controlled, reproducible comparison that measures how much temporal and behavioral information adds over strong baselines, under strict leakage-free chronological evaluation, with explainability and false-positive constraints.</p></details>
+    <details><summary>What is your contribution if temporal fraud detection already exists?</summary><p>Two things. First, a controlled, reproducible comparison that measures how much temporal and behavioral information adds over strong baselines, under strict leakage-free chronological evaluation, with explainability and false-positive constraints. Second, the novelty: a model that monitors its own SHAP explanations on unlabelled traffic and decides when to retrain, with a delayed-label guard.</p></details>
+    <details><summary>What exactly is new in the novelty?</summary><p>Explanation shift as a measure was proposed by Mougan et al. (2023). We use it as a retraining trigger for fraud detection under delayed labels. We add alarm-then-adapt retraining and a binomial delayed-label guard. We test it against a frozen model, periodic retraining, a PSI trigger and random retrain timing, on real, harmless, harmful and concept-drift streams.</p></details>
+    <details><summary>Why not just retrain every day?</summary><p>On the real stream, retraining every chunk (22 times) gave 0.793 PR-AUC against 0.799 for never retraining, so it cost compute for nothing. On the harmful shift, our 5 well-timed retrains (0.768) matched retraining every chunk (0.766), and 5 retrains at random times reached only 0.745.</p></details>
+    <details><summary>Why is SHAP drift better than input drift (PSI)?</summary><p>PSI reacts to any change in the inputs, including fields the model ignores. After the harmless shift, PSI raised an alarm on every chunk and retrained 5 times; the SHAP monitor stayed quiet. SHAP drift weighs each change by how much the model relies on that feature, and each alarm names the features responsible.</p></details>
+    <details><summary>What can your monitor not see?</summary><p>A change that only affects the rare fraud rows, such as the sign flip: the unlabelled data looks normal, so no label-free monitor can see it. That is why we added the delayed-label guard. It fired 2 chunks after the flip and recovered PR-AUC from 0.001 to 0.618.</p></details>
   </div>
 </section>
 
@@ -509,6 +606,104 @@ const Engine = (() => {
   return { generate, experiment, curves, confusion, STATIC, TEMPORAL, FEATURES: STATIC.concat(TEMPORAL) };
 })();
 if (typeof module !== "undefined") module.exports = Engine;
+
+</script>
+<script>
+(() => {
+  const NOV = {"real":{"frozen":{"ap":[1.0,0.6671,0.7727,1.0,0.5605,0.3536,1.0,0.6672,0.777,0.7064,0.7017,1.0,0.7529,1.0,0.8051,0.7798,0.9104,0.6658,1.0,0.8895,0.5,0.2505,0.5339,0.7529],"hit":[1,2,3,2,7,1,7,2,3,4,5,6,4,8,6,7,9,6,1,8,1,2,2,3],"rt":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"xd":[0.351,0.417,0.457,0.497,0.491,0.435,0.462,0.48,0.514,0.53,0.558,0.511,0.51,0.534,0.516,0.574,0.554,0.491,0.509,0.51,0.56,0.521,0.516,0.537],"pd":[0.747,0.791,0.804,0.816,0.781,0.678,0.692,0.77,0.795,0.815,0.791,0.621,0.693,0.707,0.627,0.687,0.633,0.661,0.704,0.676,0.679,0.631,0.581,0.548],"fraud":[1,3,4,2,11,3,7,3,4,5,8,6,5,8,9,9,11,10,1,9,1,3,4,4]},"psi":{"ap":[1.0,0.6671,0.7727,1.0,0.5605,0.3536,1.0,0.6672,0.777,0.7064,0.7017,1.0,0.7529,1.0,0.8051,0.7798,0.9104,0.6658,1.0,0.8895,0.5,0.2505,0.5339,0.7529],"hit":[1,2,3,2,7,1,7,2,3,4,5,6,4,8,6,7,9,6,1,8,1,2,2,3],"rt":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"pa":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},"prop":{"ap":[1.0,0.6671,0.7727,1.0,0.5605,0.3536,1.0,0.6672,0.777,0.7064,0.7017,1.0,0.7529,1.0,0.8051,0.7798,0.9104,0.6658,1.0,0.8895,0.5,0.2505,0.5339,0.7529],"hit":[1,2,3,2,7,1,7,2,3,4,5,6,4,8,6,7,9,6,1,8,1,2,2,3],"rt":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"xa":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"ga":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]}},"harmless":{"frozen":{"ap":[1.0,0.6671,0.7727,1.0,0.5605,0.3536,1.0,0.6672,0.8929,0.684,0.7096,1.0,0.7307,0.9861,0.7722,0.78,0.9156,0.6328,1.0,0.8894,0.5,0.1785,0.5284,0.751],"hit":[1,2,3,2,7,1,7,2,4,3,6,6,4,8,6,7,9,6,1,8,1,1,2,3],"rt":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"xd":[0.351,0.417,0.457,0.497,0.491,0.435,0.462,0.48,0.864,0.861,0.884,0.867,0.867,0.881,0.905,0.93,0.931,0.891,0.905,0.903,0.939,0.928,0.944,0.946],"pd":[0.747,0.791,0.804,0.816,0.781,0.678,0.692,0.77,1.405,1.402,1.391,1.384,1.39,1.383,1.395,1.397,1.392,1.46,1.479,1.444,1.432,1.48,1.487,1.491],"fraud":[1,3,4,2,11,3,7,3,4,5,8,6,5,8,9,9,11,10,1,9,1,3,4,4]},"psi":{"ap":[1.0,0.6671,0.7727,1.0,0.5605,0.3536,1.0,0.6672,0.8929,0.6379,0.752,1.0,0.7583,1.0,0.8356,0.7856,0.9183,0.6622,1.0,0.8894,1.0,0.1769,0.5379,0.7509],"hit":[1,2,3,2,7,1,7,2,4,3,6,6,4,8,6,7,9,6,1,8,1,1,2,3],"rt":[0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0],"pa":[0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},"prop":{"ap":[1.0,0.6671,0.7727,1.0,0.5605,0.3536,1.0,0.6672,0.8929,0.684,0.7096,1.0,0.7307,0.9861,0.7722,0.78,0.9156,0.6328,1.0,0.8894,0.5,0.1785,0.5284,0.751],"hit":[1,2,3,2,7,1,7,2,4,3,6,6,4,8,6,7,9,6,1,8,1,1,2,3],"rt":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"xa":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"ga":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]}},"harmful":{"frozen":{"ap":[1.0,0.6671,0.7727,1.0,0.5605,0.3536,1.0,0.6672,0.7518,0.8167,0.6319,1.0,0.7465,0.9276,0.6832,0.779,0.8842,0.6081,1.0,0.8218,0.3333,0.1164,0.5286,0.6925],"hit":[1,2,3,2,7,1,7,2,3,4,5,6,4,7,6,7,9,6,1,7,1,1,2,3],"rt":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"xd":[0.351,0.417,0.457,0.497,0.491,0.435,0.462,0.48,1.529,1.531,1.54,1.511,1.513,1.528,1.529,1.574,1.545,1.534,1.541,1.526,1.547,1.56,1.599,1.632],"pd":[0.747,0.791,0.804,0.816,0.781,0.678,0.692,0.77,1.191,1.207,1.18,1.015,1.092,1.1,1.032,1.09,1.032,1.057,1.12,1.065,1.085,1.028,0.978,0.95],"fraud":[1,3,4,2,11,3,7,3,4,5,8,6,5,8,9,9,11,10,1,9,1,3,4,4]},"psi":{"ap":[1.0,0.6671,0.7727,1.0,0.5605,0.3536,1.0,0.6672,0.7518,0.6479,0.6319,1.0,0.7363,0.9861,0.7406,0.7815,0.925,0.6347,1.0,0.8892,1.0,0.17,0.5474,0.7507],"hit":[1,2,3,2,7,1,7,2,3,3,5,6,4,8,6,7,9,6,1,8,1,1,2,3],"rt":[0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0],"pa":[0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},"prop":{"ap":[1.0,0.6671,0.7727,1.0,0.5605,0.3536,1.0,0.6672,0.7518,0.6479,0.6319,1.0,0.7363,0.9861,0.7406,0.7815,0.925,0.6347,1.0,0.8892,1.0,0.17,0.5474,0.7507],"hit":[1,2,3,2,7,1,7,2,3,3,5,6,4,8,6,7,9,6,1,8,1,1,2,3],"rt":[0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0],"xa":[0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"ga":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]}},"flip":{"frozen":{"ap":[1.0,0.6671,0.7727,1.0,0.5605,0.3536,1.0,0.6672,0.001,0.0051,0.0016,0.0033,0.0013,0.002,0.0029,0.0024,0.007,0.0021,0.0013,0.0023,0.0006,0.0016,0.0014,0.0013],"hit":[1,2,3,2,7,1,7,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"rt":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"xd":[0.351,0.417,0.457,0.497,0.491,0.435,0.462,0.48,0.73,0.73,0.742,0.717,0.719,0.738,0.734,0.799,0.782,0.729,0.758,0.742,0.772,0.765,0.752,0.771],"pd":[0.747,0.791,0.804,0.816,0.781,0.678,0.692,0.77,0.807,0.827,0.802,0.634,0.706,0.72,0.64,0.701,0.648,0.675,0.72,0.691,0.695,0.648,0.597,0.564],"fraud":[1,3,4,2,11,3,7,3,4,5,8,6,5,8,9,9,11,10,1,9,1,3,4,4]},"psi":{"ap":[1.0,0.6671,0.7727,1.0,0.5605,0.3536,1.0,0.6672,0.001,0.0051,0.0016,0.0033,0.0013,0.002,0.0029,0.0024,0.007,0.0021,0.0013,0.0023,0.0006,0.0016,0.0014,0.0013],"hit":[1,2,3,2,7,1,7,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"rt":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"pa":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},"prop":{"ap":[1.0,0.6671,0.7727,1.0,0.5605,0.3536,1.0,0.6672,0.001,0.0051,0.0016,1.0,0.643,1.0,0.7658,0.7819,0.9347,0.6995,1.0,0.7297,1.0,0.1766,0.5043,0.7506],"hit":[1,2,3,2,7,1,7,2,0,0,0,6,3,8,6,7,9,6,1,6,1,1,2,3],"rt":[0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0],"xa":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"ga":[0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0]}},"table":[{"scenario":"real","strategy":"Frozen (train once)","retrains":0.0,"post_onset_pr_auc":0.7988},{"scenario":"real","strategy":"Periodic (every chunk)","retrains":22.0,"post_onset_pr_auc":0.7934},{"scenario":"real","strategy":"Periodic (every 4 chunks)","retrains":5.0,"post_onset_pr_auc":0.7948},{"scenario":"real","strategy":"Input-drift trigger (PSI)","retrains":0.0,"post_onset_pr_auc":0.7988},{"scenario":"real","strategy":"Explanation-drift trigger (proposed)","retrains":0.0,"post_onset_pr_auc":0.7988},{"scenario":"real","strategy":"Explanation drift + label guard (proposed)","retrains":0.0,"post_onset_pr_auc":0.7988},{"scenario":"harmless","strategy":"Frozen (train once)","retrains":0.0,"post_onset_pr_auc":0.7963},{"scenario":"harmless","strategy":"Periodic (every chunk)","retrains":22.0,"post_onset_pr_auc":0.8032},{"scenario":"harmless","strategy":"Periodic (every 4 chunks)","retrains":5.0,"post_onset_pr_auc":0.8059},{"scenario":"harmless","strategy":"Input-drift trigger (PSI)","retrains":5.0,"post_onset_pr_auc":0.801},{"scenario":"harmless","strategy":"Explanation-drift trigger (proposed)","retrains":0.0,"post_onset_pr_auc":0.7963},{"scenario":"harmless","strategy":"Explanation drift + label guard (proposed)","retrains":0.0,"post_onset_pr_auc":0.7963},{"scenario":"harmful","strategy":"Frozen (train once)","retrains":0.0,"post_onset_pr_auc":0.7374},{"scenario":"harmful","strategy":"Periodic (every chunk)","retrains":22.0,"post_onset_pr_auc":0.7655},{"scenario":"harmful","strategy":"Periodic (every 4 chunks)","retrains":5.0,"post_onset_pr_auc":0.76},{"scenario":"harmful","strategy":"Input-drift trigger (PSI)","retrains":5.0,"post_onset_pr_auc":0.7684},{"scenario":"harmful","strategy":"Explanation-drift trigger (proposed)","retrains":5.0,"post_onset_pr_auc":0.7684},{"scenario":"harmful","strategy":"Explanation drift + label guard (proposed)","retrains":5.0,"post_onset_pr_auc":0.7684},{"scenario":"harmful","strategy":"Random times (same no. of retrains)","retrains":4.8889,"post_onset_pr_auc":0.7454},{"scenario":"flip","strategy":"Frozen (train once)","retrains":0.0,"post_onset_pr_auc":0.0013},{"scenario":"flip","strategy":"Periodic (every chunk)","retrains":22.0,"post_onset_pr_auc":0.6535},{"scenario":"flip","strategy":"Periodic (every 4 chunks)","retrains":5.0,"post_onset_pr_auc":0.5417},{"scenario":"flip","strategy":"Input-drift trigger (PSI)","retrains":0.0,"post_onset_pr_auc":0.0013},{"scenario":"flip","strategy":"Explanation-drift trigger (proposed)","retrains":0.0,"post_onset_pr_auc":0.0013},{"scenario":"flip","strategy":"Explanation drift + label guard (proposed)","retrains":5.3333,"post_onset_pr_auc":0.6175}],"attr":{"real":[["hour_sin",0.0548],["V4",0.0175],["amt_mean_1h",0.0134],["V14",0.0131],["V8",0.008],["cnt_60s",0.0076],["V18",0.0052],["amt_std_100",0.0048]],"harmless":[["hour_sin",0.0522],["V2",0.0413],["V15",0.0245],["V4",0.0238],["cnt_60s",0.0183],["V27",0.0148],["amt_mean_1h",0.0123],["V14",0.0096]],"harmful":[["V4",0.1836],["V14",0.1187],["hour_sin",0.0523],["V12",0.0507],["amt_mean_1h",0.0118],["cnt_600s",0.0112],["V10",0.0078],["V8",0.0063]],"flip":[["hour_sin",0.0549],["V4",0.0521],["V14",0.029],["V12",0.0197],["amt_mean_1h",0.0137],["V8",0.0089],["cnt_60s",0.0077],["V18",0.0054]]}};
+  const $ = (id) => document.getElementById(id);
+  const N = 24, ONSET = 8, H0 = 33.44, HW = (48.0 - 33.44) / N;
+  const DESC = {
+    real: "The validation and test periods exactly as recorded: 113,491 transactions and 131 frauds in 24 chunks of about 36 minutes. Each chunk is scored before its labels exist; labels arrive one chunk late.",
+    harmless: "From chunk 8, the 10 features the model relies on least (counts, gaps, V2, V15, V27…) shift by +2 standard deviations, as after an upstream logging change. Any alarm here is a false alarm.",
+    harmful: "From chunk 8, the 3 features the model relies on most (V14, V4, V12) shift by +3 standard deviations, as after a feature-pipeline or unit change. The model degrades and should retrain.",
+    flip: "From chunk 8, the sign of V14, V4 and V12 flips. Fraud becomes invisible to the model, while the unlabelled data still looks normal to both drift monitors.",
+  };
+  let scen = "harmful", cur = ONSET - 1, timer = null;
+
+  const hours = (c) => `hours ${(H0 + c * HW).toFixed(1)}–${(H0 + (c + 1) * HW).toFixed(1)}`;
+  const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+  const smooth = (a) => a.map((_, i) => { const w = a.slice(Math.max(0, i - 2), i + 1).filter((v) => v !== null); return w.length ? w.reduce((s, v) => s + v, 0) / w.length : null; });
+  const sum = (a, n) => a.slice(0, n + 1).reduce((s, v) => s + v, 0);
+
+  function chart(svg, series, yMax, opts = {}) {
+    const W = 420, H = 230, L = 36, R = 10, T = 10, B = 26, x = (i) => L + (i / (N - 1)) * (W - L - R), y = (v) => T + (1 - v / yMax) * (H - T - B);
+    let s = "";
+    for (let k = 0; k <= 4; k++) { const v = (yMax * k) / 4; s += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${L - 6}" y="${y(v) + 3}" text-anchor="end">${v.toFixed(yMax > 1.5 ? 1 : 2)}</text>`; }
+    for (let c = 0; c < N; c += 4) s += `<text x="${x(c)}" y="${H - 8}" text-anchor="middle">${c}</text>`;
+    if (scen !== "real") s += `<line x1="${x(ONSET - 0.5)}" x2="${x(ONSET - 0.5)}" y1="${T}" y2="${H - B}" stroke="var(--muted)" stroke-dasharray="2 3"/><text x="${x(ONSET - 0.5) + 4}" y="${T + 10}" text-anchor="start">shift starts</text>`;
+    if (opts.alarmLine) s += `<line x1="${L}" x2="${W - R}" y1="${y(1)}" y2="${y(1)}" stroke="var(--ink)" stroke-dasharray="5 4"/><text x="${W - R}" y="${y(1) - 4}" text-anchor="end">alarm threshold</text>`;
+    s += `<rect x="${x(cur) - 6}" y="${T}" width="12" height="${H - T - B}" fill="var(--accent-soft)" opacity=".7"/>`;
+    for (const se of series) {
+      let d = "", pen = false;
+      se.v.forEach((v, i) => { if (i > cur || v === null) { pen = false; return; } const yy = y(Math.min(v, yMax)); d += `${pen ? "L" : "M"}${x(i).toFixed(1)},${yy.toFixed(1)}`; pen = true; });
+      s += `<path d="${d}" fill="none" stroke="${se.c}" stroke-width="${se.w || 2}" ${se.dash ? `stroke-dasharray="${se.dash}"` : ""}/>`;
+      const last = se.v.slice(0, cur + 1).map((v, i) => [v, i]).filter(([v]) => v !== null).pop();
+      if (last) s += `<circle cx="${x(last[1])}" cy="${y(Math.min(last[0], yMax))}" r="3.2" fill="${se.c}"/>`;
+      (se.rt || []).forEach((r, i) => { if (r && i <= cur) { const xx = x(i + 0.5); s += `<path d="M${xx - 4},${H - B} L${xx + 4},${H - B} L${xx},${H - B - 7}Z" fill="${se.c}"/>`; } });
+    }
+    svg.innerHTML = s;
+  }
+
+  function render() {
+    const D = NOV[scen], f = D.frozen, p = D.psi, q = D.prop;
+    $("cur").value = cur; $("curV").textContent = `${cur} of 23 · ${hours(cur)}`;
+    $("scenDesc").textContent = DESC[scen];
+    document.querySelectorAll(".segb").forEach((b) => b.setAttribute("aria-selected", b.dataset.s === scen));
+    const tot = sum(f.fraud, cur);
+    const lane = (id, rid, s) => { $(id).textContent = `${sum(s.hit, cur)} / ${tot}`; const r = sum(s.rt, cur); $(rid).textContent = `frauds caught · ${r} retrain${r === 1 ? "" : "s"}`; };
+    lane("cFrozen", "rFrozen", f); lane("cPsi", "rPsi", p); lane("cProp", "rProp", q);
+    chart($("qChart"), [
+      { v: smooth(f.ap), c: css("--muted"), w: 2 },
+      { v: smooth(p.ap), c: css("--accent"), w: 2, dash: "5 3", rt: p.rt },
+      { v: smooth(q.ap), c: css("--prop"), w: 2.6, rt: q.rt },
+    ], 1);
+    chart($("dChart"), [
+      { v: f.pd, c: css("--accent"), w: 2, dash: "5 3" },
+      { v: f.xd, c: css("--prop"), w: 2.6 },
+    ], 2, { alarmLine: true });
+
+    const ev = [];
+    for (let c = 0; c <= cur; c++) {
+      if (scen !== "real" && c === ONSET) ev.push(["shift", c, "The injected shift starts."]);
+      if (p.pa[c]) ev.push(["psi", c, `PSI input-drift alarm.${scen === "harmless" ? " This is a false alarm: only ignored fields changed." : ""}`]);
+      if (q.xa[c]) ev.push(["prop", c, "SHAP explanation-drift alarm. Adaptation window opens."]);
+      if (q.ga[c]) ev.push(["prop", c, `Label guard alarm: labels for chunk ${c - 1} show the model caught only ${q.hit[c - 1]} of ${f.fraud[c - 1]} frauds.`]);
+      if (q.rt[c]) ev.push(["prop", c, `Proposed model retrains on all labels released so far (up to chunk ${c - 1}).`]);
+      if (p.rt[c]) ev.push(["psi", c, "PSI strategy retrains."]);
+    }
+    if (!ev.length) ev.push(["none", cur, scen === "real" ? "No alarms. Both monitors stay below threshold, so no compute is spent on retraining." : "Waiting for the shift."]);
+    $("log").innerHTML = ev.slice(-7).reverse().map(([k, c, t]) => `<li class="ev ${k}"><span class="mono">#${c}</span>${t}</li>`).join("");
+
+    const A = NOV.attr[scen], tot2 = A.reduce((s, [, v]) => s + v, 0), mx = Math.max(...A.map(([, v]) => v));
+    const fired = scen === "harmful";
+    $("attrNote").textContent = scen === "real" ? "Explanation drift on the real stream, first chunk of the period. The biggest mover is hour_sin, the day/night cycle. It is natural and stays below the threshold."
+      : scen === "harmless" ? "After the harmless shift the SHAP score barely moves (the model ignores these fields), so no alarm. PSI fires anyway."
+      : scen === "harmful" ? "First chunk after the harmful shift: V4, V14 and V12 carry most of the drift score. The alarm points at the features that changed."
+      : "After the flip, the attribution distributions look almost the same, so the SHAP monitor stays quiet. The label guard catches it once labels arrive.";
+    $("attrBars").innerHTML = (cur >= ONSET || scen === "real" ? A : []).map(([n, v]) => `<div class="bar"><span class="mono">${n}</span><div class="track"><div class="fill ${fired ? "pos" : ""}" style="left:0;width:${(v / mx) * 100}%"></div></div><span class="v">${v.toFixed(3)}</span></div>`).join("") || `<p class="note">Play the stream past chunk ${ONSET} to see the attribution.</p>`;
+  }
+
+  function stop() { clearInterval(timer); timer = null; $("play").textContent = "▶ Play stream"; }
+  $("play").onclick = () => {
+    if (timer) return stop();
+    if (cur >= N - 1) cur = -1;
+    $("play").textContent = "❚❚ Pause";
+    const tick = () => { if (cur >= N - 1) return stop(); cur++; render(); };
+    tick(); timer = setInterval(tick, matchMedia("(prefers-reduced-motion: reduce)").matches ? 900 : 650);
+  };
+  $("stepB").onclick = () => { stop(); cur = Math.min(N - 1, cur + 1); render(); };
+  $("cur").oninput = (e) => { stop(); cur = +e.target.value; render(); };
+  document.querySelectorAll(".segb").forEach((b) => (b.onclick = () => { stop(); scen = b.dataset.s; cur = scen === "real" ? N - 1 : ONSET - 1; render(); }));
+  matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", render);
+  new MutationObserver(render).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+
+  const T = NOV.table, scs = ["real", "harmless", "harmful", "flip"];
+  const strategies = [...new Set(T.map((r) => r.strategy))];
+  const cell = (s, sc) => { const r = T.find((t) => t.strategy === s && t.scenario === sc); return r ? `${r.post_onset_pr_auc.toFixed(3)} <span class="note">(${(+r.retrains.toFixed(1)).toString()})</span>` : "<span class='note'>n/a</span>"; };
+  $("novTable").innerHTML = `<thead><tr><th>Strategy</th>${scs.map((s) => `<th class="r">${s}</th>`).join("")}</tr></thead><tbody>${strategies.map((s) => `<tr class="${s.includes("label guard") ? "best" : ""}"><td>${s}</td>${scs.map((sc) => `<td class="num">${cell(s, sc)}</td>`).join("")}</tr>`).join("")}</tbody>`;
+  render();
+})();
 
 </script>
 <script>
