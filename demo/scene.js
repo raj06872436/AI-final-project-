@@ -99,7 +99,7 @@
   function resize() {
     const w = canvas.clientWidth, h = canvas.clientHeight;
     renderer.setSize(w, h, false);
-    camera.aspect = w / h; camera.updateProjectionMatrix();
+    camera.aspect = w / h; camera.position.z = w < h ? 16 : 9.5; camera.updateProjectionMatrix();
     pm.uniforms.scale.value = h * Math.min(devicePixelRatio || 1, 2) * 0.0065;
   }
   addEventListener("resize", resize); resize();
@@ -117,7 +117,7 @@
     S.warp += (S.warpT - S.warp) * k; S.hide += (S.hideT - S.hide) * k;
     S.pulse = Math.min(1, S.pulse + dt / 1.6);
     S.focus = Math.max(0, S.focus - dt / 5);
-    canvas.style.opacity = Math.max(1 - 0.8 * S.scroll, 0.2 + 0.6 * S.focus).toFixed(3);
+    canvas.style.opacity = Math.max(1 - 0.4 * S.scroll, 0.6 + 0.4 * S.focus).toFixed(3);
     const ease = 1 - Math.pow(1 - S.intro, 3);
 
     // threads: engrave in one after another, then breathe
@@ -170,8 +170,8 @@
     root.rotation.y += ((S.mx * 0.35 + S.scroll * 0.5) - root.rotation.y) * k;
     root.rotation.z += dt * 0.025;
     const wide = innerWidth > 860;
-    root.position.x = (wide ? 1.9 : 0) + S.scroll * (wide ? 1.2 : 0);
-    root.position.y = wide ? 0 : 0.6;
+    root.position.x = (wide ? 1.9 : 0) - S.scroll * (wide ? 1.9 : 0);
+    root.position.y = wide ? 0 : 2.2;
     renderer.render(scene, camera);
   }
   requestAnimationFrame(frame);
