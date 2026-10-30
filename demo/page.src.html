@@ -6,21 +6,13 @@
 /* Banknote security print: pale note paper, intaglio-green engraving, plum second plate for the proposed method,
    vermilion seal ink for fraud. One bold element: the three.js guilloche rosette made of the transaction stream. */
 :root{
-  --paper:#edf1e7; --sheet:rgba(248,250,244,.9); --solid:#f8faf4; --ink:#13261f; --muted:#56675e; --line:#c9d3c4;
+  --paper:#ffffff; --sheet:rgba(255,255,255,.9); --solid:#ffffff; color-scheme:light; --ink:#13261f; --muted:#56675e; --line:#c9d3c4;
   --engrave:#2f5d4c; --engrave-soft:#dce8df; --plum:#7a2e68; --plum-soft:#f1e1ec; --fraud:#cf3f22; --fraud-soft:#f8e1d9;
   --psi:#3b5a8c; --psi-soft:#dfe6f2; --ok:#2f5d4c; --ok-soft:#dce8df;
   --accent:var(--engrave); --accent-soft:var(--engrave-soft); --prop:var(--plum); --prop-soft:var(--plum-soft); --bg:var(--paper); --surface:var(--solid);
   --display:"Bodoni Moda",Didot,Georgia,serif; --body:"Public Sans",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,monospace;
   --r:4px;
 }
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --paper:#0f1a16; --sheet:rgba(21,35,30,.88); --solid:#15231e; --ink:#e3ebe3; --muted:#9db0a5; --line:#2b3f37;
-  --engrave:#86c0a6; --engrave-soft:#1d3a2f; --plum:#e29bd2; --plum-soft:#3b2036; --fraud:#ff8466; --fraud-soft:#3d1f17;
-  --psi:#9bb7ec; --psi-soft:#1e2b44; --ok:#86c0a6; --ok-soft:#1d3a2f; color-scheme:dark}}
-:root[data-theme="dark"]{
-  --paper:#0f1a16; --sheet:rgba(21,35,30,.88); --solid:#15231e; --ink:#e3ebe3; --muted:#9db0a5; --line:#2b3f37;
-  --engrave:#86c0a6; --engrave-soft:#1d3a2f; --plum:#e29bd2; --plum-soft:#3b2036; --fraud:#ff8466; --fraud-soft:#3d1f17;
-  --psi:#9bb7ec; --psi-soft:#1e2b44; --ok:#86c0a6; --ok-soft:#1d3a2f; color-scheme:dark}
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
 body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.6;font-variant-numeric:tabular-nums}
@@ -159,9 +151,7 @@ ul{margin:0;padding-left:20px} li{margin:3px 0}
 footer{padding-block:40px 64px}
 
 /* glass layer: panels float over the three.js engraving */
-:root{--glass:rgba(248,250,244,.52);--glass-card:rgba(255,255,255,.5);--glass-edge:rgba(255,255,255,.75);--glass-shadow:0 18px 50px -12px rgba(19,38,31,.22),inset 0 1px 0 rgba(255,255,255,.8)}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--glass:rgba(16,30,25,.5);--glass-card:rgba(255,255,255,.05);--glass-edge:rgba(255,255,255,.12);--glass-shadow:0 18px 50px -12px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.08)}}
-:root[data-theme="dark"]{--glass:rgba(16,30,25,.5);--glass-card:rgba(255,255,255,.05);--glass-edge:rgba(255,255,255,.12);--glass-shadow:0 18px 50px -12px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.08)}
+:root{--glass:rgba(255,255,255,.6);--glass-card:rgba(255,255,255,.62);--glass-edge:rgba(255,255,255,.75);--glass-shadow:0 18px 50px -12px rgba(19,38,31,.22),inset 0 1px 0 rgba(255,255,255,.8)}
 .tabbar{position:sticky;top:0;z-index:5;padding-top:calc(env(safe-area-inset-top,0px) + 10px);padding-bottom:10px;background:color-mix(in srgb,var(--paper) 45%,transparent);backdrop-filter:blur(16px) saturate(150%);-webkit-backdrop-filter:blur(16px) saturate(150%);border-bottom:1px solid var(--glass-edge)}
 .tabbar-in{display:flex;align-items:center;gap:10px 18px;flex-wrap:wrap}
 .tabbar .brand{font-family:var(--display);font-weight:800;font-size:18px}
