@@ -1,174 +1,409 @@
 <title>Temporal Fraud Detection</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,500;6..96,700;6..96,800&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
-/* Layout: single reading column (max 1080px), sections as numbered report chapters, demo as a two-pane instrument panel */
+/* Banknote security print: pale note paper, intaglio-green engraving, plum second plate for the proposed method,
+   vermilion seal ink for fraud. One bold element: the three.js guilloche rosette made of the transaction stream. */
 :root{
-  --bg:#f5f7fb; --surface:#ffffff; --ink:#141a2b; --muted:#5b6478; --line:#dfe3ec;
-  --accent:#2747d6; --accent-soft:#e6ebff; --fraud:#c7362f; --fraud-soft:#fbe7e5; --ok:#1f8a5b; --ok-soft:#e1f4ea; --warn:#a86a00; --prop:#0b7f7a; --prop-soft:#dcf2f0;
-  --display:"Archivo",system-ui,sans-serif; --body:"IBM Plex Sans",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,monospace;
+  --paper:#ffffff; --sheet:rgba(255,255,255,.9); --solid:#ffffff; color-scheme:light; --ink:#13261f; --muted:#56675e; --line:#c9d3c4;
+  --engrave:#2f5d4c; --engrave-soft:#dce8df; --plum:#7a2e68; --plum-soft:#f1e1ec; --fraud:#cf3f22; --fraud-soft:#f8e1d9;
+  --psi:#3b5a8c; --psi-soft:#dfe6f2; --ok:#2f5d4c; --ok-soft:#dce8df;
+  --accent:var(--engrave); --accent-soft:var(--engrave-soft); --prop:var(--plum); --prop-soft:var(--plum-soft); --bg:var(--paper); --surface:var(--solid);
+  --display:"Bodoni Moda",Didot,Georgia,serif; --body:"Public Sans",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,monospace;
+  --r:4px;
 }
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --bg:#0e1220; --surface:#161b2c; --ink:#e7eaf3; --muted:#9aa3b8; --line:#2a3148;
-  --accent:#8199ff; --accent-soft:#1f2850; --fraud:#ff7a70; --fraud-soft:#3a1d1f; --ok:#4fd18f; --ok-soft:#14301f; --warn:#e8b14a; --prop:#3fd0c4; --prop-soft:#123533; color-scheme:dark}}
-:root[data-theme="dark"]{
-  --bg:#0e1220; --surface:#161b2c; --ink:#e7eaf3; --muted:#9aa3b8; --line:#2a3148;
-  --accent:#8199ff; --accent-soft:#1f2850; --fraud:#ff7a70; --fraud-soft:#3a1d1f; --ok:#4fd18f; --ok-soft:#14301f; --warn:#e8b14a; --prop:#3fd0c4; --prop-soft:#123533; color-scheme:dark}
 *{box-sizing:border-box}
-body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.6}
-.wrap{max-width:1080px;margin:0 auto;padding-block:32px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:56px}
-h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;line-height:1.15}
-h1{font-size:clamp(28px,5vw,46px);font-weight:800;letter-spacing:-.02em}
-h2{font-size:26px;font-weight:700;display:flex;gap:12px;align-items:baseline}
-h2 .n{font-family:var(--mono);font-size:14px;color:var(--accent);font-weight:500}
-h3{font-size:17px;font-weight:700}
-p{margin:0;max-width:70ch}
-.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
-.mono,.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
-section{display:flex;flex-direction:column;gap:18px}
-.lede{font-size:17px;color:var(--muted)}
-.hero{display:flex;flex-direction:column;gap:16px;border-bottom:1px solid var(--line);padding-bottom:28px}
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden}
-.stat{background:var(--surface);padding:14px 16px;display:flex;flex-direction:column;gap:2px}
-.stat b{font-family:var(--mono);font-size:22px;font-weight:500}
-.stat span{font-size:12.5px;color:var(--muted)}
-.stat.alert b{color:var(--fraud)}
-.pipeline{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-.step{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-size:13.5px}
-.step.key{border-color:var(--accent);background:var(--accent-soft)}
-.arrow{color:var(--muted);font-family:var(--mono)}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
-.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:10px;min-width:0}
-.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px;display:flex;flex-direction:column;gap:18px}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.6;font-variant-numeric:tabular-nums}
+#scene{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;transition:opacity .4s}
+.page{position:relative;z-index:1}
+.wrap{max-width:1120px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--display);margin:0;line-height:1.08;text-wrap:balance}
+h2{font-size:clamp(30px,4.6vw,52px);font-weight:700;letter-spacing:-.01em}
+h3{font-family:var(--body);font-size:16px;font-weight:700;line-height:1.3}
+p{margin:0;max-width:66ch}
+.num,.mono{font-variant-numeric:tabular-nums}
+code,.formula{font-family:var(--mono);font-size:.9em}
+.lede{font-size:clamp(17px,1.8vw,20px);line-height:1.55}
+.note{font-size:14px;color:var(--muted)}
+
+/* nav */
+.topnav{position:sticky;top:0;z-index:5;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);background:color-mix(in srgb,var(--paper) 78%,transparent);border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top,0px)}
+.topnav .wrap{display:flex;gap:4px 18px;flex-wrap:wrap;align-items:center;padding-block:10px;font-size:14px}
+.topnav a{color:var(--muted);text-decoration:none;font-weight:500}
+.topnav a:hover,.topnav a:focus-visible{color:var(--ink)}
+.topnav a.nov{color:var(--plum);font-weight:700}
+.topnav .brand{font-family:var(--display);font-weight:800;color:var(--ink);font-size:17px;margin-right:auto}
+
+/* hero */
+.hero{min-height:calc(100svh - 60px);display:grid;align-content:center;gap:28px;padding-block:56px 72px}
+.hero h1{font-size:clamp(40px,6.6vw,92px);font-weight:800;letter-spacing:-.025em;line-height:.98}
+.hero h1 span i{white-space:nowrap}
+.hero h1 span{display:block;overflow:hidden}
+.hero h1 span i{display:block;font-style:normal;transform:translateY(105%);animation:rise 1.1s cubic-bezier(.2,.8,.2,1) forwards}
+.hero h1 span:nth-child(2) i{animation-delay:.12s}.hero h1 span:nth-child(3) i{animation-delay:.24s}
+@keyframes rise{to{transform:none}}
+.hero .lede{max-width:46ch;opacity:0;animation:fade 1s .7s forwards}
+.hero .formal{font-size:14px;color:var(--muted);max-width:52ch;opacity:0;animation:fade 1s .9s forwards}
+@keyframes fade{to{opacity:1}}
+.legend{display:flex;flex-wrap:wrap;gap:8px 22px;font-size:13.5px;color:var(--muted);opacity:0;animation:fade 1s 1.2s forwards}
+.legend span{display:inline-flex;align-items:center;gap:8px}
+.legend i{width:10px;height:10px;border-radius:50%;display:inline-block}
+.cta{display:flex;flex-wrap:wrap;gap:12px;opacity:0;animation:fade 1s 1s forwards}
+a.btn{display:inline-block;text-decoration:none}
+button,a.btn{font:inherit;font-weight:600;font-size:15px;background:var(--ink);color:var(--paper);border:1px solid var(--ink);border-radius:999px;padding:10px 20px;cursor:pointer;transition:transform .15s,background .15s}
+button:hover,a.btn:hover{transform:translateY(-1px)}
+button.ghost,a.btn.ghost{background:transparent;color:var(--ink)}
+button:focus-visible,input:focus-visible,a:focus-visible,summary:focus-visible{outline:2px solid var(--plum);outline-offset:3px}
+
+/* sections */
+section{padding-block:72px;display:flex;flex-direction:column;gap:22px}
+.sheet{background:var(--sheet);border-top:1px solid var(--line);border-bottom:1px solid var(--line);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.kicker{font-size:15px;font-weight:600;color:var(--plum)}
+.kicker.base{color:var(--engrave)}
+.card{background:var(--solid);border:1px solid var(--line);border-radius:var(--r);padding:20px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.panel{background:var(--solid);border:1px solid var(--line);border-radius:var(--r);padding:clamp(16px,2.4vw,28px);display:flex;flex-direction:column;gap:20px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+
+/* contribution statement */
+.claim{font-family:var(--display);font-size:clamp(24px,3.2vw,38px);line-height:1.22;font-weight:500;max-width:30ch}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border-top:2px solid var(--ink)}
+.steps .s{padding:18px 20px 4px 0;display:flex;flex-direction:column;gap:8px;border-right:1px solid var(--line);padding-left:20px}
+.steps .s:first-child{padding-left:0}.steps .s:last-child{border-right:0}
+.steps .k{font-family:var(--display);font-size:44px;font-weight:800;line-height:1;color:var(--plum)}
+.proof{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.proof .card{border-top:3px solid var(--plum)}
+.proof b.big{font-family:var(--display);font-size:clamp(34px,4vw,48px);font-weight:700;line-height:1}
+.prior{border-left:3px solid var(--plum);padding:6px 0 6px 18px}
+
+/* tables */
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--solid)}
+table{border-collapse:collapse;width:100%;font-size:14.5px}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+tr:last-child td{border-bottom:0}
+th{font-size:13px;color:var(--muted);font-weight:600}
+td.num{text-align:right} th.r{text-align:right}
+tr.best td{background:var(--plum-soft)}
+#results tr.best td,#benchmarks tr.best td{background:var(--engrave-soft)}
+.pill{display:inline-block;font-size:12.5px;padding:2px 10px;border-radius:99px;font-weight:600}
+.pill.ok{background:var(--ok-soft);color:var(--ok)} .pill.bad{background:var(--fraud-soft);color:var(--fraud)} .pill.mid{background:var(--psi-soft);color:var(--psi)}
+
+/* prototype */
 .controls{display:flex;flex-wrap:wrap;gap:18px 28px;align-items:end}
 .ctl{display:flex;flex-direction:column;gap:4px;min-width:180px;flex:1}
-.ctl label{font-size:12.5px;color:var(--muted)}
-.ctl output{font-family:var(--mono);color:var(--ink)}
-input[type=range]{width:100%;accent-color:var(--accent)}
-button{font:inherit;font-weight:600;background:var(--accent);color:#fff;border:0;border-radius:8px;padding:9px 16px;cursor:pointer}
-button.ghost{background:transparent;color:var(--accent);border:1px solid var(--accent)}
-button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.tablewrap{overflow-x:auto}
-table{border-collapse:collapse;width:100%;font-size:14px}
-th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
-th{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600}
-td.num{text-align:right} th.r{text-align:right}
-tr.best td{background:var(--accent-soft)}
-.pill{display:inline-block;font-size:11.5px;padding:2px 8px;border-radius:99px;font-weight:600;font-family:var(--mono)}
-.pill.ok{background:var(--ok-soft);color:var(--ok)} .pill.bad{background:var(--fraud-soft);color:var(--fraud)} .pill.mid{background:var(--accent-soft);color:var(--accent)}
-.cm{display:grid;grid-template-columns:auto 1fr 1fr;gap:4px;font-size:13px}
-.cm div{padding:10px;border-radius:6px;text-align:center}
-.cm .h{color:var(--muted);font-size:12px;padding:4px}
-.cm .tp{background:var(--ok-soft);color:var(--ok)} .cm .tn{background:var(--ok-soft);color:var(--ok)}
-.cm .fp{background:var(--fraud-soft);color:var(--fraud)} .cm .fn{background:var(--fraud-soft);color:var(--fraud)}
-.cm b{display:block;font-family:var(--mono);font-size:20px}
+.ctl label{font-size:13.5px;color:var(--muted)}
+.ctl output{color:var(--ink);font-weight:600}
+input[type=range]{width:100%;accent-color:var(--plum)}
+.cm{display:grid;grid-template-columns:auto 1fr 1fr;gap:4px;font-size:13.5px}
+.cm div{padding:10px;border-radius:var(--r);text-align:center}
+.cm .h{color:var(--muted);font-size:12.5px;padding:4px}
+.cm .tp,.cm .tn{background:var(--ok-soft);color:var(--ok)}
+.cm .fp,.cm .fn{background:var(--fraud-soft);color:var(--fraud)}
+.cm b{display:block;font-size:21px}
 .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-.metric{border:1px solid var(--line);border-radius:8px;padding:8px 10px}
-.metric span{font-size:11.5px;color:var(--muted);display:block}
-.metric b{font-family:var(--mono);font-size:18px;font-weight:500}
-svg text{fill:var(--muted);font-family:var(--mono);font-size:10px}
+.metric{border:1px solid var(--line);border-radius:var(--r);padding:8px 10px}
+.metric span{font-size:12.5px;color:var(--muted);display:block}
+.metric b{font-size:19px;font-weight:600}
+svg text{fill:var(--muted);font-family:var(--body);font-size:10px}
 .bars{display:flex;flex-direction:column;gap:6px}
-.bar{display:grid;grid-template-columns:130px 1fr 54px;gap:10px;align-items:center;font-size:13px}
-.bar .track{height:14px;background:var(--bg);border-radius:4px;position:relative;overflow:hidden}
-.bar .fill{position:absolute;top:0;bottom:0;background:var(--accent);border-radius:4px}
+.bar{display:grid;grid-template-columns:130px 1fr 54px;gap:10px;align-items:center;font-size:13.5px}
+.bar .track{height:12px;background:var(--paper);border-radius:2px;position:relative;overflow:hidden}
+.bar .fill{position:absolute;top:0;bottom:0;background:var(--engrave);border-radius:2px;transition:width .5s cubic-bezier(.2,.8,.2,1),left .5s}
 .bar .fill.neg{background:var(--ok)} .bar .fill.pos{background:var(--fraud)}
-.bar .v{font-family:var(--mono);text-align:right;font-size:12.5px}
-.note{font-size:13px;color:var(--muted)}
-.callout{border-left:3px solid var(--accent);padding:4px 0 4px 14px;color:var(--ink)}
-details{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 16px}
-details summary{cursor:pointer;font-weight:600}
-details p{margin-top:8px;color:var(--muted)}
-.qa{display:flex;flex-direction:column;gap:8px}
-ul{margin:0;padding-left:20px} li{margin:3px 0}
-.topnav{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line);margin-inline:calc(-1*max(16px,env(safe-area-inset-left,0px)));padding:8px max(16px,env(safe-area-inset-left,0px));display:flex;gap:6px 14px;flex-wrap:wrap;font-size:13px}
-.topnav a{color:var(--muted);text-decoration:none;font-weight:500}.topnav a:hover,.topnav a:focus-visible{color:var(--accent)}
-.topnav a.nov{color:var(--prop);font-weight:700}
-body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.bar .v{text-align:right;font-size:13px}
+.callout{border-left:3px solid var(--engrave);padding:4px 0 4px 14px;color:var(--ink)}
+
+/* replay */
 .seg{display:flex;flex-wrap:wrap;gap:6px}
-.segb{background:var(--surface);color:var(--ink);border:1px solid var(--line);font-weight:500}
-.segb[aria-selected="true"]{background:var(--prop);border-color:var(--prop);color:var(--surface)}
+.segb{background:transparent;color:var(--ink);border:1px solid var(--line);font-weight:500}
+.segb[aria-selected="true"]{background:var(--plum);border-color:var(--plum);color:var(--solid)}
 .replay-head{display:flex;flex-direction:column;gap:10px}
 .race{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-.lane{border:1px solid var(--line);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;gap:2px;border-top:4px solid var(--muted)}
-.lane.psi{border-top-color:var(--accent)} .lane.prop{border-top-color:var(--prop);background:var(--prop-soft)}
-.lane b{font-family:var(--mono);font-size:22px;font-weight:500}
-.lname{font-size:12.5px;font-weight:600}.lsub{font-size:12px;color:var(--muted)}
+.lane{border:1px solid var(--line);border-radius:var(--r);padding:12px 16px;display:flex;flex-direction:column;gap:2px;border-top:4px solid var(--muted);transition:background .4s}
+.lane.psi{border-top-color:var(--psi)} .lane.prop{border-top-color:var(--plum);background:var(--plum-soft)}
+.lane b{font-family:var(--display);font-size:30px;font-weight:700}
+.lane.flash{animation:flash .9s}
+@keyframes flash{30%{box-shadow:0 0 0 4px var(--plum-soft),0 0 0 6px var(--plum)}}
+.lname{font-size:13.5px;font-weight:600}.lsub{font-size:13px;color:var(--muted)}
 .charts .card{gap:6px}
-.log{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:13.5px}
-.ev{display:grid;grid-template-columns:42px 1fr;gap:8px;padding:6px 8px;border-radius:6px;background:var(--bg)}
-.ev.prop{background:var(--prop-soft)} .ev.psi{background:var(--accent-soft)} .ev .mono{color:var(--muted)}
+.log{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:14px}
+.ev{display:grid;grid-template-columns:42px 1fr;gap:8px;padding:6px 10px;border-radius:var(--r);background:var(--paper)}
+@keyframes slide{from{opacity:0;transform:translateX(-6px)}}
+.ev.prop{background:var(--plum-soft)} .ev.psi{background:var(--psi-soft)} .ev.shift{background:var(--fraud-soft)} .ev .mono{color:var(--muted)}
+
+/* figures, qa */
 .figs{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-figure{margin:0;background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:6px;min-width:0}
+figure{margin:0;background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:10px;display:flex;flex-direction:column;gap:6px;min-width:0}
 figure.wide{grid-column:1/-1}
 figure img{width:100%;height:auto;display:block}
-figcaption{font-size:12.5px;color:#4a5263}
-@media (max-width:760px){.race,.figs{grid-template-columns:1fr}}
-@media (max-width:760px){.grid2,.grid3{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}.metrics{grid-template-columns:repeat(2,1fr)}.bar{grid-template-columns:100px 1fr 48px}}
-@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+figcaption{font-size:13px;color:#4a5550}
+details{border-bottom:1px solid var(--line);padding:14px 0}
+details summary{cursor:pointer;font-weight:600;font-size:16px}
+details p{margin-top:8px;color:var(--muted)}
+ul{margin:0;padding-left:20px} li{margin:3px 0}
+.pipeline{display:grid;grid-template-columns:repeat(5,1fr);gap:0;counter-reset:st;border-top:2px solid var(--ink)}
+.step{padding:14px 14px 14px 0;font-size:14px;border-bottom:1px solid var(--line);counter-increment:st}
+.step::before{content:counter(st);display:block;font-family:var(--display);font-weight:800;font-size:22px;color:var(--engrave)}
+.step.key{color:var(--ink);font-weight:600}
+.step.key::before{color:var(--plum)}
+footer{padding-block:40px 64px}
+
+/* glass layer: panels float over the three.js engraving */
+:root{--glass:rgba(255,255,255,.6);--glass-card:rgba(255,255,255,.62);--glass-edge:rgba(255,255,255,.75);--glass-shadow:0 18px 50px -12px rgba(19,38,31,.22),inset 0 1px 0 rgba(255,255,255,.8)}
+.tabbar{position:sticky;top:0;z-index:5;padding-top:calc(env(safe-area-inset-top,0px) + 10px);padding-bottom:10px;background:color-mix(in srgb,var(--paper) 45%,transparent);backdrop-filter:blur(16px) saturate(150%);-webkit-backdrop-filter:blur(16px) saturate(150%);border-bottom:1px solid var(--glass-edge)}
+.tabbar-in{display:flex;align-items:center;gap:10px 18px;flex-wrap:wrap}
+.tabbar .brand{font-family:var(--display);font-weight:800;font-size:18px}
+.tabs{position:relative;display:flex;gap:2px;padding:5px;border-radius:999px;background:var(--glass);border:1px solid var(--glass-edge);box-shadow:var(--glass-shadow);backdrop-filter:blur(18px) saturate(160%);-webkit-backdrop-filter:blur(18px) saturate(160%);overflow-x:auto;scrollbar-width:none;max-width:100%}
+.tabs::-webkit-scrollbar{display:none}
+.tab{position:relative;z-index:1;background:transparent;border:0;color:var(--muted);font-weight:600;font-size:14px;padding:8px 15px;white-space:nowrap;border-radius:999px}
+.tab:hover{transform:none;color:var(--ink)}
+.tab[aria-selected="true"]{color:var(--solid)}
+.tab-ink{position:absolute;z-index:0;top:5px;bottom:5px;left:0;width:0;border-radius:999px;background:var(--plum);box-shadow:0 6px 18px -4px var(--plum);transition:transform .45s cubic-bezier(.3,1.4,.4,1),width .45s cubic-bezier(.3,1.4,.4,1)}
+.glass{background:var(--glass);border:1px solid var(--glass-edge);border-radius:22px;box-shadow:var(--glass-shadow);backdrop-filter:blur(22px) saturate(150%);-webkit-backdrop-filter:blur(22px) saturate(150%);padding:clamp(18px,3.4vw,44px);display:flex;flex-direction:column;gap:64px}
+.glass section{padding-block:0}
+.tabpanel{padding-bottom:40px}
+.tabpanel.enter .glass{animation:panelIn .6s cubic-bezier(.2,.8,.2,1)}
+@keyframes panelIn{from{opacity:0;transform:translateY(18px) scale(.985);filter:blur(6px)}}
+.card,.panel,.tablewrap,.lane,.metric{background:var(--glass-card);border-color:var(--glass-edge)}
+.card,.panel{border-radius:16px}.tablewrap{border-radius:14px}
+.lane.prop{background:color-mix(in srgb,var(--plum-soft) 70%,transparent)}
+.hero{min-height:calc(82svh - 60px)}
+figure{border-radius:14px}
+@media (max-width:860px){.grid2,.grid3,.race,.figs,.proof{grid-template-columns:1fr}.steps{grid-template-columns:1fr}.steps .s{border-right:0;border-bottom:1px solid var(--line);padding-left:0}.pipeline{grid-template-columns:1fr 1fr}.metrics{grid-template-columns:repeat(2,1fr)}.bar{grid-template-columns:100px 1fr 48px}.hero{min-height:auto;padding-top:46vh}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation-duration:.01s!important;animation-delay:0s!important}html{scroll-behavior:auto}}
 </style>
 
-<div class="wrap">
-<nav class="topnav" aria-label="Sections"><a href="#problem">Problem</a><a href="#pipeline">Pipeline</a><a href="#demo">Prototype</a><a href="#results">Results</a><a class="nov" href="#novelty">Novelty</a><a href="#figures">Figures</a><a href="#hypotheses">Hypotheses</a><a href="#limits">Limits</a><a href="#viva">Viva Q&amp;A</a></nav>
+<canvas id="scene" aria-hidden="true"></canvas>
+<div class="page">
+<nav class="tabbar" aria-label="Sections"><div class="wrap tabbar-in"><span class="brand">Fraud, explained</span><div class="tabs" role="tablist"><button role="tab" class="tab" id="t-contribution" aria-controls="p-contribution" data-tab="contribution">Contribution</button><button role="tab" class="tab" id="t-replay" aria-controls="p-replay" data-tab="replay">Stream replay</button><button role="tab" class="tab" id="t-study" aria-controls="p-study" data-tab="study">Baseline study</button><button role="tab" class="tab" id="t-prototype" aria-controls="p-prototype" data-tab="prototype">Prototype</button><button role="tab" class="tab" id="t-figures" aria-controls="p-figures" data-tab="figures">Figures</button><button role="tab" class="tab" id="t-evidence" aria-controls="p-evidence" data-tab="evidence">Benchmarks</button><button role="tab" class="tab" id="t-viva" aria-controls="p-viva" data-tab="viva">Limits and Q&amp;A</button></div></div></nav>
 
-<header class="hero">
-  <div class="eyebrow">AI Laboratory · T.Y. B.Tech Information Technology · Research Project</div>
-  <h1>Temporal and Explainable Machine Learning for Early Financial Fraud Detection</h1>
-  <p class="lede">A leakage-free comparison of transaction-level, temporal and behavioral models. This page walks through the problem, the method, a working in-browser prototype, our results on the real dataset, and our novelty: a model that monitors its own SHAP explanations to decide when to retrain.</p>
-  <div class="stats">
-    <div class="stat"><b>284,807</b><span>transactions in ULB European dataset</span></div>
-    <div class="stat alert"><b>492</b><span>fraud cases</span></div>
-    <div class="stat alert"><b>0.172%</b><span>fraud rate (severe imbalance)</span></div>
-    <div class="stat"><b>0.8016</b><span>best verified PR-AUC (SMOTE-RF)</span></div>
-  </div>
+<header class="wrap hero">
+  <h1><span><i>A fraud model</i></span><span><i>that knows when</i></span><span><i>it has gone stale.</i></span></h1>
+  <p class="lede">Fraud labels arrive days late, so a deployed model can fail silently. Ours watches how its own SHAP explanations change on new, unlabelled transactions, and retrains only when its reasoning shifts.</p>
+  <p class="formal">Temporal and Explainable Machine Learning for Early Financial Fraud Detection. T.Y. B.Tech Information Technology, AI Laboratory research project, on the ULB credit-card dataset (284,807 transactions, 492 frauds).</p>
+  <div class="cta"><a class="btn" href="#contribution" data-go="contribution">See the contribution</a><a class="btn ghost" href="#replay" data-go="replay">Replay the stream</a></div>
+  <div class="legend" aria-hidden="true"><span><i style="background:var(--engrave)"></i>legitimate transactions</span><span><i style="background:var(--fraud)"></i>fraud</span><span><i style="background:var(--plum)"></i>the model's sweep</span></div>
 </header>
 
+<div class="wrap tabpanel" role="tabpanel" id="p-contribution" aria-labelledby="t-contribution" hidden>
+<div class="glass">
+<section id="novelty">
+  <p class="kicker">The contribution</p>
+  <h2>Explanation-drift retraining under delayed labels</h2>
+  <p class="claim">We turn a shift in the model's own explanations into a decision about when to retrain, and add a label check for the shift explanations cannot see.</p>
+  <div class="steps">
+    <div class="s"><span class="k">1</span><h3>Measure explanation drift, without labels</h3><p class="note">For each chunk of new transactions, the share of SHAP attribution mass that moved away from recent training data: <span class="formula">D = Σ W1(SHAP<sub>ref</sub>, SHAP<sub>now</sub>) / Σ E|SHAP<sub>ref</sub>|</span>. The alarm threshold is the 90th percentile of D on earlier training chunks.</p></div>
+    <div class="s"><span class="k">2</span><h3>Alarm, then adapt</h3><p class="note">The drifted chunk's own labels are not known yet, so retraining at once does not help. An alarm opens a 4-chunk window in which the model retrains each time new labels arrive.</p></div>
+    <div class="s"><span class="k">3</span><h3>Guard with delayed labels</h3><p class="note">When a chunk's labels arrive and the model caught significantly fewer than half of its frauds (one-sided binomial test, α = 0.05), that is also an alarm. It catches fraud that changes while the data looks normal.</p></div>
+  </div>
+  <div class="proof">
+    <div class="card"><b class="big">0 vs 16</b><h3>False alarms after a harmless shift</h3><p class="note">Fields the model ignores moved by 2 SD. Our monitor stayed quiet; the PSI input-drift monitor fired on all 16 later chunks and retrained 5 times for nothing.</p></div>
+    <div class="card"><b class="big">5 vs 22</b><h3>Retrains for the same recovery</h3><p class="note">After the harmful shift, 5 well-timed retrains reached PR-AUC 0.768, as good as retraining every chunk (0.766 with 22). Five retrains at random times reached only 0.745.</p></div>
+    <div class="card"><b class="big">0.001 → 0.618</b><h3>Recovery from a silent flip</h3><p class="note">When fraud flips sign, both label-free monitors are blind. The label guard notices once labels arrive and the model recovers with about 5 retrains.</p></div>
+  </div>
+  <p class="prior"><b>What is borrowed and what is new.</b> Explanation shift as a drift measure comes from Mougan et al. (2023). Our contribution is using it as a retraining policy for fraud under delayed labels, adding the alarm-then-adapt window and the binomial label guard, and testing it against a frozen model, periodic retraining, a PSI trigger and random retrain timing.</p>
+</section>
+</div>
+</div>
+
+<div class="wrap tabpanel" role="tabpanel" id="p-replay" aria-labelledby="t-replay" hidden>
+<div class="glass">
+<section id="replay">
+  <p class="kicker">Stream replay</p>
+  <h2>Watch the monitor decide</h2>
+  <p>The validation and test periods (113,491 transactions, 131 frauds) replayed as 24 chunks of about 36 minutes, with labels arriving one chunk late. Pick a scenario and play it; the engraving behind the glass reacts to the same stream.</p>
+  <div class="panel">
+    <div class="replay-head">
+      <div class="seg" role="tablist" aria-label="Stream scenario">
+        <button class="segb" data-s="real" role="tab">Real stream</button>
+        <button class="segb" data-s="harmless" role="tab">Harmless shift</button>
+        <button class="segb" data-s="harmful" role="tab">Harmful shift</button>
+        <button class="segb" data-s="flip" role="tab">Silent fraud flip</button>
+      </div>
+      <p class="note" id="scenDesc"></p>
+    </div>
+    <div class="controls">
+      <button id="play">Play stream</button>
+      <button class="ghost" id="stepB">Step one chunk</button>
+      <div class="ctl"><label for="cur">Chunk <output id="curV"></output></label><input id="cur" type="range" min="0" max="23" step="1" value="23"></div>
+    </div>
+    <div class="race">
+      <div class="lane frozen"><span class="lname">Frozen model</span><b id="cFrozen"></b><span class="lsub" id="rFrozen"></span></div>
+      <div class="lane psi"><span class="lname">PSI input-drift trigger</span><b id="cPsi"></b><span class="lsub" id="rPsi"></span></div>
+      <div class="lane prop" id="laneProp"><span class="lname">Proposed: SHAP drift + label guard</span><b id="cProp"></b><span class="lsub" id="rProp"></span></div>
+    </div>
+    <div class="grid2 charts">
+      <div class="card"><h3>Detection quality per chunk</h3><p class="note">PR-AUC on each chunk (3-chunk mean). Triangles mark retrains. Where lines overlap, the strategies scored the same.</p><svg id="qChart" viewBox="0 0 420 230" width="100%" role="img" aria-label="Per-chunk PR-AUC for each strategy"></svg></div>
+      <div class="card"><h3>Label-free drift signals</h3><p class="note">Measured on the frozen model: score divided by its alarm threshold. Above the dashed line means alarm.</p><svg id="dChart" viewBox="0 0 420 230" width="100%" role="img" aria-label="Drift scores relative to threshold"></svg></div>
+    </div>
+    <div class="grid2">
+      <div class="card"><h3>Event log</h3><ol id="log" class="log"></ol></div>
+      <div class="card"><h3>Why the alarm fired</h3><p class="note" id="attrNote"></p><div id="attrBars" class="bars"></div></div>
+    </div>
+  </div>
+  <h3>Results over 3 seeds</h3><p class="note">PR-AUC from chunk 8 on, where the shifts start. Retrains in brackets.</p>
+  <div class="tablewrap"><table id="novTable"></table></div>
+  <p class="note"><b>Limits.</b> The real two-day stream has no drift worth acting on: retraining every chunk (0.793) does not beat the frozen model (0.799), so on real data the monitor's value is the 22 retrains it saves. The three shifts are controlled stress tests. On the harmful shift PSI does as well as our trigger; its weakness is false alarms on fields that do not matter.</p>
+</section>
+</div>
+</div>
+
+<div class="wrap tabpanel" role="tabpanel" id="p-study" aria-labelledby="t-study" hidden>
+<div class="glass">
 <section id="problem">
-  <h2><span class="n">01</span>Problem and why it is hard</h2>
-  <p><b>Problem statement.</b> Develop and evaluate a leakage-free ML framework for financial fraud detection that compares transaction-level models with temporal and behavioral models, and explains individual fraud predictions.</p>
+  <p class="kicker base">The baseline study</p>
+  <h2>Why fraud is hard to learn</h2>
+  <p><b>Problem statement.</b> Develop and evaluate a leakage-free ML framework for financial fraud detection that compares transaction-level models with temporal and behavioral models, and explains individual fraud predictions. The contribution above is built on this study.</p>
   <div class="grid3">
-    <div class="card"><h3>Class imbalance</h3><p class="note">Only 0.172% of transactions are fraud. A model that says "legitimate" for everything scores <b class="mono">99.83%</b> accuracy and catches zero fraud. We use PR-AUC, precision, recall and F1 instead.</p></div>
-    <div class="card"><h3>Temporal behavior</h3><p class="note">Transactions arrive as a stream. Gap since the previous transaction, recent count and deviation from the card's normal amount carry signal that a single row does not.</p></div>
+    <div class="card"><h3>Class imbalance</h3><p class="note">Only 0.172% of transactions are fraud. A model that says "legitimate" for everything scores <b>99.83%</b> accuracy and catches zero fraud. We use PR-AUC, precision, recall and F1 instead.</p></div>
+    <div class="card"><h3>Temporal behavior</h3><p class="note">Transactions arrive as a stream. Gap since the previous transaction, recent count and deviation from recent amounts carry signal that a single row does not.</p></div>
     <div class="card"><h3>Evaluation leakage</h3><p class="note">A random split trains on the future and tests on the past. A chronological split (train on early data, test on later) matches real deployment.</p></div>
   </div>
-</section>
-
-<section id="pipeline">
-  <h2><span class="n">02</span>Pipeline</h2>
+  <h3 id="pipeline">Pipeline</h3>
   <div class="pipeline">
-    <span class="step">Raw transactions</span><span class="arrow">→</span>
-    <span class="step">Dataset audit + duplicate removal</span><span class="arrow">→</span>
-    <span class="step key">Chronological split 60/20/20</span><span class="arrow">→</span>
-    <span class="step key">Train-only preprocessing</span><span class="arrow">→</span>
-    <span class="step">Static + temporal features</span><span class="arrow">→</span>
-    <span class="step">LR / RF / XGBoost / LightGBM</span><span class="arrow">→</span>
-    <span class="step">LSTM / GRU (where sequences valid)</span><span class="arrow">→</span>
-    <span class="step key">Threshold tuned on validation</span><span class="arrow">→</span>
-    <span class="step">SHAP explanations</span><span class="arrow">→</span>
-    <span class="step">Metrics, drift and ablation</span>
+    <span class="step">Raw transactions</span>
+    <span class="step">Audit and remove 1,081 duplicates</span>
+    <span class="step key">Chronological split 60/20/20</span>
+    <span class="step key">Train-only preprocessing</span>
+    <span class="step">Static + past-only temporal features</span>
+    <span class="step">LR, RF, XGBoost, LightGBM, MLP</span>
+    <span class="step">LSTM / GRU over last k transactions</span>
+    <span class="step key">Threshold tuned on validation</span>
+    <span class="step">SHAP explanations</span>
+    <span class="step key">Explanation-drift monitor</span>
   </div>
   <div class="card">
     <h3>Leakage rules followed</h3>
     <ul class="note">
-      <li>Scaler, feature selector and SMOTE are fit on training data only.</li>
-      <li>Decision threshold is chosen on validation data, never on test.</li>
+      <li>Scaler and SMOTE are fit on training data only, inside pipelines.</li>
+      <li>Decision threshold and history window are chosen on validation data, never on test.</li>
       <li>Temporal features use only transactions that happened before the current one.</li>
       <li>The test period is evaluated once, after model selection is finished.</li>
     </ul>
   </div>
 </section>
+<section id="results">
+  <h2>Results on the real ULB dataset</h2>
+  <p>Produced by <code>run_experiments.py</code> on all 284,807 transactions: 1,081 duplicates removed, chronological 60/20/20 split (test = hours 40.3–48.0, 74 frauds), threshold tuned on validation, 3 seeds.</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Model</th><th class="r">PR-AUC</th><th class="r">ROC-AUC</th><th class="r">Precision</th><th class="r">Recall</th><th class="r">F1</th></tr></thead>
+    <tbody>
+      <tr><td>Logistic Regression</td><td class="num">0.7447</td><td class="num">0.9811</td><td class="num">0.960</td><td class="num">0.649</td><td class="num">0.774</td></tr>
+      <tr><td>SMOTE + Logistic Regression</td><td class="num">0.7574</td><td class="num">0.9792</td><td class="num">0.980</td><td class="num">0.649</td><td class="num">0.781</td></tr>
+      <tr><td>Random Forest (best test score)</td><td class="num">0.8165</td><td class="num">0.9614</td><td class="num">0.885</td><td class="num">0.757</td><td class="num">0.816</td></tr>
+      <tr><td>SMOTE + Random Forest</td><td class="num">0.8143</td><td class="num">0.9734</td><td class="num">0.876</td><td class="num">0.730</td><td class="num">0.796</td></tr>
+      <tr class="best"><td>XGBoost (final, chosen on validation)</td><td class="num">0.7929</td><td class="num">0.9733</td><td class="num">0.896</td><td class="num">0.739</td><td class="num">0.810</td></tr>
+      <tr><td>LightGBM</td><td class="num">0.8003</td><td class="num">0.9838</td><td class="num">0.907</td><td class="num">0.743</td><td class="num">0.817</td></tr>
+      <tr><td>MLP</td><td class="num">0.7935</td><td class="num">0.9671</td><td class="num">0.835</td><td class="num">0.725</td><td class="num">0.775</td></tr>
+      <tr><td>LSTM (k=5, chosen on validation)</td><td class="num">0.7867</td><td class="num">0.9767</td><td class="num">0.958</td><td class="num">0.622</td><td class="num">0.754</td></tr>
+      <tr><td>GRU (k=5, chosen on validation)</td><td class="num">0.7950</td><td class="num">0.9820</td><td class="num">0.927</td><td class="num">0.689</td><td class="num">0.791</td></tr>
+    </tbody>
+  </table></div>
+  <div class="grid3">
+    <div class="card"><h3>H3: random split is optimistic</h3><p class="note">XGBoost PR-AUC <b>0.866</b> on a random split vs <b>0.793</b> on the chronological split. Random Forest 0.855 vs 0.817.</p></div>
+    <div class="card"><h3>H1: temporal features</h3><p class="note">Small, mixed gain: XGBoost 0.793 to 0.797, LightGBM 0.800 to 0.803, RF 0.817 to 0.814. ULB has no card ID, so the features describe the global stream only.</p></div>
+    <div class="card"><h3>H5: the threshold matters</h3><p class="note">Final model: max-F1 threshold catches 55 of 74 with 7 false alarms; min-cost catches 58 with 41; an 85% recall target catches 64 with 478.</p></div>
+    <div class="card"><h3>History window</h3><p class="note">Test PR-AUC for GRU rises from k=5 (0.795) to k=20 (0.805), then levels off at k=50. The window is still chosen on validation (k=5), never on test.</p></div>
+    <div class="card"><h3>Drift</h3><p class="note">All models lose PR-AUC in the last third of the test period (XGBoost 0.84 to 0.53), but only 12 frauds fall there, so treat it as an indication.</p></div>
+    <div class="card"><h3>SHAP</h3><p class="note">Explained model: XGBoost (+temporal), so the temporal features can be inspected too (test PR-AUC 0.797 vs 0.793 for plain XGBoost). Top features: V4, V14, V12, V11, V10.</p></div>
+  </div>
+</section>
+<section id="datasets">
+  <h2>Data, models and imbalance</h2>
+  <div class="grid2">
+    <div class="card">
+      <h3>Datasets</h3>
+      <div class="tablewrap"><table>
+        <thead><tr><th></th><th>ULB European CC</th><th>IEEE-CIS</th></tr></thead>
+        <tbody>
+          <tr><td>Rows</td><td>284,807</td><td>590,540</td></tr>
+          <tr><td>Fraud</td><td>492 (0.172%)</td><td>20,663 (~3.5%)</td></tr>
+          <tr><td>Features</td><td>Time, V1–V28 (PCA), Amount</td><td>Card, device, email, address</td></tr>
+          <tr><td>Role</td><td>Primary benchmark</td><td>Future per-card validation</td></tr>
+        </tbody>
+      </table></div>
+      <p class="note">ULB: European cardholders, 2 days in September 2013, from the ULB Machine Learning Group and Worldline. Time = seconds since the first transaction; V1–V28 = PCA components the bank used to anonymise the real fields; Amount in euros (mean 88.35, median 22, max 25,691); Class = 1 for fraud. No missing values; 1,081 duplicates removed. No card IDs, so true per-card sequences need IEEE-CIS.</p>
+    </div>
+    <div class="card">
+      <h3>Models compared</h3>
+      <ul class="note">
+        <li><b>Logistic Regression</b>: simple, interpretable linear baseline.</li>
+        <li><b>Random Forest</b>: strong nonlinear tree ensemble.</li>
+        <li><b>XGBoost / LightGBM</b>: gradient boosting, strongest family on tabular data.</li>
+        <li><b>MLP</b>: neural tabular baseline.</li>
+        <li><b>LSTM / GRU</b>: read the last k transactions as a sequence.</li>
+      </ul>
+      <h3>Imbalance strategies</h3>
+      <ul class="note">
+        <li>Class weighting (used for the final model)</li>
+        <li>SMOTE, applied inside the training fold only</li>
+        <li>Undersampling (worst, 0.784)</li>
+        <li>Threshold tuning on validation data</li>
+      </ul>
+    </div>
+  </div>
+</section>
+<section id="details">
+  <h2>Parameters and layers</h2>
+  <p>Every value is taken from the code (<code>src/fraud/models.py</code> and <code>src/fraud/sequence.py</code>). Scaling and SMOTE are fitted on training data only, inside a pipeline.</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Model</th><th>Key hyperparameters</th></tr></thead>
+    <tbody>
+      <tr><td>Logistic Regression</td><td style="white-space:normal">Standard scaling, L2 penalty C = 1.0, class_weight = balanced, max_iter = 3000</td></tr>
+      <tr><td>SMOTE + Logistic Regression</td><td style="white-space:normal">As above, SMOTE oversamples fraud to 1:1 on training data</td></tr>
+      <tr><td>Random Forest</td><td style="white-space:normal">300 trees, max_features = sqrt (about 5 of 31), min_samples_leaf = 2, no depth limit, class_weight = balanced_subsample</td></tr>
+      <tr><td>SMOTE + Random Forest</td><td style="white-space:normal">300 trees, SMOTE to a 1:10 fraud-to-genuine ratio</td></tr>
+      <tr class="best"><td>XGBoost (final)</td><td style="white-space:normal">500 trees, max_depth = 4, learning_rate = 0.05, subsample = 0.8, colsample_bytree = 0.8, min_child_weight = 2, scale_pos_weight = 497 (genuine ÷ fraud in training)</td></tr>
+      <tr><td>LightGBM</td><td style="white-space:normal">500 trees, learning_rate = 0.03, num_leaves = 31, min_child_samples = 100, reg_lambda = 5, subsample = 0.8, colsample_bytree = 0.8</td></tr>
+      <tr><td>MLP</td><td style="white-space:normal">31 inputs → 64 ReLU → 32 ReLU → 1 sigmoid (2 hidden layers, 4,161 parameters), Adam, alpha = 0.0001, early stopping</td></tr>
+      <tr><td>LSTM / GRU</td><td style="white-space:normal">Adam lr = 0.002, weight decay 0.00001, batch 512, up to 8 epochs, early stopping (patience 3 on validation PR-AUC), gradient clipping 1.0, weighted binary cross-entropy</td></tr>
+    </tbody>
+  </table></div>
+  <h3>LSTM and GRU layers</h3>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Layer</th><th>LSTM</th><th>GRU</th></tr></thead>
+    <tbody>
+      <tr><td>Input</td><td>last 5 transactions × 42 features</td><td>same</td></tr>
+      <tr><td>Recurrent layer</td><td>1 LSTM layer, 64 units (27,648 params)</td><td>1 GRU layer, 64 units (20,736 params)</td></tr>
+      <tr><td>Skip path</td><td>Linear 42 → 64 on the current transaction (2,752)</td><td>same</td></tr>
+      <tr><td>Head</td><td>concat 128 → ReLU → dropout 0.2 → Linear 128 → 1 → sigmoid (129)</td><td>same</td></tr>
+      <tr class="best"><td>Trainable parameters</td><td class="num">30,529</td><td class="num">23,617</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">Random Forest and XGBoost have no layers: Random Forest is 300 full-depth trees that vote; XGBoost is 500 depth-4 trees, each correcting the errors of the ones before.</p>
+</section>
 
+<section id="metrics">
+  <h2>Metrics</h2>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Metric</th><th>Formula</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td>Precision</td><td><code>TP / (TP + FP)</code></td><td>Share of alerts that are really fraud</td></tr>
+      <tr><td>Recall</td><td><code>TP / (TP + FN)</code></td><td>Share of fraud that was caught</td></tr>
+      <tr><td>F1</td><td><code>2PR / (P + R)</code></td><td>Balance of precision and recall</td></tr>
+      <tr><td>PR-AUC</td><td><code>area under P–R curve</code></td><td>Primary metric under imbalance</td></tr>
+      <tr><td>ROC-AUC</td><td><code>area under TPR–FPR</code></td><td>Secondary; can look high even with weak precision</td></tr>
+      <tr><td>FPR</td><td><code>FP / (FP + TN)</code></td><td>Rate of wrongly flagged customers</td></tr>
+    </tbody>
+  </table></div>
+</section>
+</div>
+</div>
+
+<div class="wrap tabpanel" role="tabpanel" id="p-prototype" aria-labelledby="t-prototype" hidden>
+<div class="glass">
 <section id="demo">
-  <h2><span class="n">03</span>Live prototype</h2>
-  <p>This runs in your browser. It generates a 48-hour stream of 20,000 card transactions with injected fraud bursts and concept drift, builds leakage-safe temporal features, trains logistic regression on the earliest 60%, tunes the threshold on the next 20% and tests once on the final 20%. <span class="note">Synthetic data, used to demonstrate the method. Results on the real dataset are in section 04.</span></p>
+  <h2>Live prototype</h2>
+  <p>This runs in your browser. It generates a 48-hour stream of 20,000 card transactions with fraud bursts and concept drift, builds leakage-safe temporal features, trains logistic regression on the earliest 60%, tunes the threshold on the next 20% and tests once on the final 20%. <span class="note">Synthetic data, used to demonstrate the method; real results are above.</span></p>
   <div class="panel">
     <div class="controls">
       <div class="ctl"><label for="drift">Concept drift (how much the fraud signature fades over time) <output id="driftV">0.6</output></label><input id="drift" type="range" min="0" max="1" step="0.1" value="0.6"></div>
       <div class="ctl"><label for="rate">Base fraud rate <output id="rateV">0.6%</output></label><input id="rate" type="range" min="0.002" max="0.02" step="0.001" value="0.006"></div>
       <button id="run">Generate data and train</button>
     </div>
-    <div id="status" class="note mono">Training…</div>
+    <div id="status" class="note">Training…</div>
 
     <h3>Experiment table (test period, threshold tuned on validation)</h3>
     <div class="tablewrap"><table>
@@ -192,12 +427,12 @@ figcaption{font-size:12.5px;color:#4a5263}
           <div class="metric"><span>F1</span><b id="mF"></b></div>
           <div class="metric"><span>Accuracy</span><b id="mA"></b></div>
         </div>
-        <p class="note">Move the slider: lower threshold catches more fraud but raises false alarms. Accuracy barely moves, which is why it is not used for model selection.</p>
+        <p class="note">A lower threshold catches more fraud but raises false alarms. Accuracy barely moves, which is why it is not used for model selection.</p>
       </div>
       <div class="card">
         <h3>Precision–recall curve</h3>
         <svg id="pr" viewBox="0 0 340 260" width="100%" role="img" aria-label="Precision recall curve"></svg>
-        <p class="note"><span style="color:var(--accent)">■</span> static + temporal &nbsp; <span style="color:var(--muted)">■</span> static only &nbsp; ● current threshold</p>
+        <p class="note"><span style="color:var(--engrave)">■</span> static + temporal &nbsp; <span style="color:var(--muted)">■</span> static only &nbsp; <span style="color:var(--fraud)">●</span> current threshold</p>
       </div>
     </div>
 
@@ -209,95 +444,25 @@ figcaption{font-size:12.5px;color:#4a5263}
       </div>
       <div class="card">
         <h3>Local explanation: one flagged transaction</h3>
-        <div class="note mono" id="txInfo"></div>
+        <div class="note" id="txInfo"></div>
         <div id="local" class="bars"></div>
         <button class="ghost" id="nextTx">Show next flagged transaction</button>
       </div>
     </div>
   </div>
 </section>
+</div>
+</div>
 
-<section id="results">
-  <h2><span class="n">04</span>Our results on the real ULB dataset</h2>
-  <p>Produced by <span class="mono">run_experiments.py</span> on all 284,807 transactions: 1,081 duplicates removed, chronological 60/20/20 split (test = hours 40.3–48.0, 74 frauds), threshold tuned on validation, 3 seeds.</p>
-  <div class="tablewrap"><table>
-    <thead><tr><th>Model</th><th class="r">PR-AUC</th><th class="r">ROC-AUC</th><th class="r">Precision</th><th class="r">Recall</th><th class="r">F1</th></tr></thead>
-    <tbody>
-      <tr><td>Logistic Regression</td><td class="num">0.7447</td><td class="num">0.9811</td><td class="num">0.960</td><td class="num">0.649</td><td class="num">0.774</td></tr>
-      <tr><td>SMOTE + Logistic Regression</td><td class="num">0.7574</td><td class="num">0.9792</td><td class="num">0.980</td><td class="num">0.649</td><td class="num">0.781</td></tr>
-      <tr class="best"><td>Random Forest</td><td class="num">0.8165</td><td class="num">0.9614</td><td class="num">0.885</td><td class="num">0.757</td><td class="num">0.816</td></tr>
-      <tr><td>SMOTE + Random Forest</td><td class="num">0.8143</td><td class="num">0.9734</td><td class="num">0.876</td><td class="num">0.730</td><td class="num">0.796</td></tr>
-      <tr><td>XGBoost (final, chosen on validation)</td><td class="num">0.7929</td><td class="num">0.9733</td><td class="num">0.896</td><td class="num">0.739</td><td class="num">0.810</td></tr>
-      <tr><td>LightGBM</td><td class="num">0.8003</td><td class="num">0.9838</td><td class="num">0.907</td><td class="num">0.743</td><td class="num">0.817</td></tr>
-      <tr><td>MLP</td><td class="num">0.7935</td><td class="num">0.9671</td><td class="num">0.835</td><td class="num">0.725</td><td class="num">0.775</td></tr>
-      <tr><td>LSTM (k=5, chosen on validation)</td><td class="num">0.7867</td><td class="num">0.9767</td><td class="num">0.958</td><td class="num">0.622</td><td class="num">0.754</td></tr>
-      <tr><td>GRU (k=5, chosen on validation)</td><td class="num">0.7950</td><td class="num">0.9820</td><td class="num">0.927</td><td class="num">0.689</td><td class="num">0.791</td></tr>
-    </tbody>
-  </table></div>
-  <div class="grid3">
-    <div class="card"><h3>H3: random split is optimistic</h3><p class="note">XGBoost PR-AUC <b class="mono">0.866</b> on a random split vs <b class="mono">0.793</b> on the chronological split. Random Forest 0.855 vs 0.817.</p></div>
-    <div class="card"><h3>H1: temporal features</h3><p class="note">Small, mixed gain: XGBoost 0.793 → 0.797, LightGBM 0.800 → 0.803, RF 0.817 → 0.814. ULB has no card ID, so features describe the global stream only.</p></div>
-    <div class="card"><h3>H5: threshold matters</h3><p class="note">Final model: max-F1 threshold catches 55/74 with 7 false alarms; min-cost catches 58 with 41; 85% recall target catches 64 with 478.</p></div>
-    <div class="card"><h3>History window</h3><p class="note">Test PR-AUC for GRU rises from k=5 (0.795) to k=20 (0.805), then levels off at k=50. The window is still chosen on validation (k=5), never on test.</p></div>
-    <div class="card"><h3>Drift</h3><p class="note">All models lose PR-AUC in the last third of the test period (XGBoost 0.84 → 0.53, only 12 frauds there).</p></div>
-    <div class="card"><h3>SHAP</h3><p class="note">Explained model: XGBoost (+temporal), so the temporal features can be inspected. Top features: V4, V14, V12, V11, V10, the same set the public benchmark reports.</p></div>
-  </div>
-</section>
-
-<section id="novelty">
-  <h2><span class="n">05</span>Novelty: a model that knows when to retrain</h2>
-  <p class="lede">Fraud labels arrive late, so a deployed model cannot tell from labels alone that it has started failing. Our model watches its own <b>SHAP explanations</b> of new, still-unlabelled transactions. When the way it reasons about the stream changes, it retrains. When only fields it ignores change, it stays quiet. Each alarm also names the features that caused it.</p>
-  <div class="grid3">
-    <div class="card"><span class="eyebrow">Step 1 · label-free</span><h3>Explanation-drift score</h3><p class="note">For every chunk of new transactions, measure how far the SHAP attributions have moved from the most recent training data: <span class="mono">D = Σ W1(SHAP<sub>ref</sub>, SHAP<sub>now</sub>) / Σ E|SHAP<sub>ref</sub>|</span>. The alarm threshold is the 90th percentile of D on earlier training chunks, so no labels and no future data are used.</p></div>
-    <div class="card"><span class="eyebrow">Step 2 · delayed labels</span><h3>Alarm, then adapt</h3><p class="note">Retraining right after an alarm does not help, because the drifted chunk's labels are not known yet. An alarm opens a 4-chunk window in which the model retrains each time new labels arrive.</p></div>
-    <div class="card"><span class="eyebrow">Step 3 · safety net</span><h3>Delayed-label guard</h3><p class="note">When a chunk's labels arrive and the model caught significantly fewer than half of its frauds (one-sided binomial test, α = 0.05), that also raises an alarm. This catches fraud that changes while the data still looks normal.</p></div>
-  </div>
-
-  <div class="panel" id="replay">
-    <div class="replay-head">
-      <div class="seg" role="tablist" aria-label="Stream scenario">
-        <button class="segb" data-s="real" role="tab">Real stream</button>
-        <button class="segb" data-s="harmless" role="tab">Harmless shift</button>
-        <button class="segb" data-s="harmful" role="tab">Harmful shift</button>
-        <button class="segb" data-s="flip" role="tab">Silent fraud flip</button>
-      </div>
-      <p class="note" id="scenDesc"></p>
-    </div>
-    <div class="controls">
-      <button id="play">▶ Play stream</button>
-      <button class="ghost" id="stepB">Step one chunk</button>
-      <div class="ctl"><label for="cur">Chunk <output id="curV"></output></label><input id="cur" type="range" min="0" max="23" step="1" value="23"></div>
-    </div>
-    <div class="race">
-      <div class="lane frozen"><span class="lname">Frozen model</span><b id="cFrozen"></b><span class="lsub" id="rFrozen"></span></div>
-      <div class="lane psi"><span class="lname">PSI input-drift trigger</span><b id="cPsi"></b><span class="lsub" id="rPsi"></span></div>
-      <div class="lane prop"><span class="lname">Proposed (SHAP drift + label guard)</span><b id="cProp"></b><span class="lsub" id="rProp"></span></div>
-    </div>
-    <div class="grid2 charts">
-      <div class="card"><h3>Detection quality per chunk</h3><p class="note">PR-AUC on each chunk (3-chunk mean). Triangles mark retrains. Where lines overlap, the strategies scored the same.</p><svg id="qChart" viewBox="0 0 420 230" width="100%" role="img" aria-label="Per-chunk PR-AUC for each strategy"></svg></div>
-      <div class="card"><h3>Label-free drift signals</h3><p class="note">Measured on the frozen model: score divided by its alarm threshold. Above the dashed line means alarm.</p><svg id="dChart" viewBox="0 0 420 230" width="100%" role="img" aria-label="Drift scores relative to threshold"></svg></div>
-    </div>
-    <div class="grid2">
-      <div class="card"><h3>Event log</h3><ol id="log" class="log"></ol></div>
-      <div class="card"><h3>Why the alarm fired</h3><p class="note" id="attrNote"></p><div id="attrBars" class="bars"></div></div>
-    </div>
-  </div>
-
-  <h3>Results over 3 seeds</h3><p class="note">PR-AUC from chunk 8 on, where the shifts start. Retrains in brackets.</p>
-  <div class="tablewrap"><table id="novTable"></table></div>
-  <div class="grid2">
-    <p class="callout">On the harmful shift, 5 well-timed retrains (0.768) beat retraining every chunk (0.766 with 22 retrains). Retraining 5 times at random moments reaches only 0.745, so the timing comes from the monitor. When the fraud signature flips silently, only the label guard notices, and the model recovers from 0.001 to 0.618.</p>
-    <p class="note"><b>Limits.</b> The real two-day stream has no drift worth acting on: retraining every chunk does not beat the frozen model, so here the monitor's value is the retraining it saves. The three shifts are controlled stress tests. On the harmful shift, PSI performs the same as our trigger; its weakness is the false alarms on irrelevant fields. Explanation shift as a measure comes from Mougan et al. (2023); our contribution is using it as a retraining trigger for fraud detection under delayed labels, with a label guard and a full baseline comparison.</p>
-  </div>
-</section>
-
+<div class="wrap tabpanel" role="tabpanel" id="p-figures" aria-labelledby="t-figures" hidden>
+<div class="glass">
 <section id="figures">
-  <h2><span class="n">06</span>Result figures</h2>
-  <p>Generated by <span class="mono">run_experiments.py</span> and <span class="mono">run_novelty.py</span> on the full ULB dataset.</p>
+  <h2>Result figures</h2>
+  <p>Generated by <code>run_experiments.py</code> and <code>run_novelty.py</code> on the full ULB dataset.</p>
   <div class="figs">
-    <figure class="wide"><img src="../results/figures/novelty_drift_timeline.png" alt="Novelty: per-chunk PR-AUC and drift signals for the four streams" loading="lazy"><figcaption>Novelty: label-free monitoring of the four streams. Red dotted lines are retrains of the proposed model.</figcaption></figure>
-    <figure class="wide"><img src="../results/figures/novelty_tradeoff.png" alt="Novelty: PR-AUC after the shift against number of retrains" loading="lazy"><figcaption>Novelty: detection quality against retraining cost. Up and left is better.</figcaption></figure>
-    <figure class="wide"><img src="../results/figures/novelty_drift_attribution.png" alt="Novelty: features that carried the drift score" loading="lazy"><figcaption>Novelty: which features carried the explanation-drift score in the first chunk after the shift.</figcaption></figure>
+    <figure class="wide"><img src="../results/figures/novelty_drift_timeline.png" alt="Novelty: per-chunk PR-AUC and drift signals for the four streams" loading="lazy"><figcaption>Contribution: label-free monitoring of the four streams. Red dotted lines are retrains of the proposed model.</figcaption></figure>
+    <figure class="wide"><img src="../results/figures/novelty_tradeoff.png" alt="Novelty: PR-AUC after the shift against number of retrains" loading="lazy"><figcaption>Contribution: detection quality against retraining cost. Up and left is better.</figcaption></figure>
+    <figure class="wide"><img src="../results/figures/novelty_drift_attribution.png" alt="Novelty: features that carried the drift score" loading="lazy"><figcaption>Contribution: which features carried the explanation-drift score in the first chunk after the shift.</figcaption></figure>
     <figure class="wide"><img src="../results/figures/pr_roc_curves.png" alt="Precision-recall and ROC curves on the test period" loading="lazy"><figcaption>Precision-recall and ROC curves on the test period.</figcaption></figure>
     <figure><img src="../results/figures/ablation_temporal.png" alt="Static versus static plus temporal features" loading="lazy"><figcaption>H1: static vs static + temporal features.</figcaption></figure>
     <figure><img src="../results/figures/split_comparison.png" alt="Random versus chronological split" loading="lazy"><figcaption>H3: random split vs chronological split.</figcaption></figure>
@@ -308,13 +473,17 @@ figcaption{font-size:12.5px;color:#4a5263}
     <figure><img src="../results/figures/confusion_final.png" alt="Confusion matrix of the final model" loading="lazy"><figcaption>Final model (XGBoost) on the test period, max-F1 threshold.</figcaption></figure>
     <figure><img src="../results/figures/fraud_over_time.png" alt="Transactions and fraud per hour" loading="lazy"><figcaption>Transaction volume and fraud over the 48 hours.</figcaption></figure>
     <figure><img src="../results/figures/all_models_pr_auc.png" alt="Test PR-AUC for all models" loading="lazy"><figcaption>Test PR-AUC of every model.</figcaption></figure>
-    <figure><img src="../results/figures/class_balance.png" alt="Class imbalance" loading="lazy"><figcaption>Class imbalance: 0.172 % fraud.</figcaption></figure>
+    <figure><img src="../results/figures/class_balance.png" alt="Class imbalance" loading="lazy"><figcaption>Class imbalance: 0.172% fraud.</figcaption></figure>
   </div>
 </section>
+</div>
+</div>
 
+<div class="wrap tabpanel" role="tabpanel" id="p-evidence" aria-labelledby="t-evidence" hidden>
+<div class="glass">
 <section id="benchmarks">
-  <h2><span class="n">07</span>Verified public benchmark results (ULB dataset)</h2>
-  <p>Public, reproducible 2026 benchmark runs on the real dataset. These are reported as external benchmark evidence, not as a fresh training run of this project.</p>
+  <h2>Public benchmark results on ULB</h2>
+  <p>Public, reproducible 2026 benchmark runs on the same dataset, reported as external reference points, not as runs of this project.</p>
   <div class="tablewrap"><table>
     <thead><tr><th>Model</th><th class="r">Precision</th><th class="r">Recall</th><th class="r">F1</th><th class="r">ROC-AUC</th><th class="r">PR-AUC</th><th>Status</th></tr></thead>
     <tbody>
@@ -332,7 +501,7 @@ figcaption{font-size:12.5px;color:#4a5263}
     <div class="card">
       <h3>PR-AUC by model</h3>
       <div class="bars" id="benchBars"></div>
-      <p class="note">PR-AUC is the primary metric because fraud is so rare. Note how Random Forest has the lowest ROC-AUC but one of the highest PR-AUC values.</p>
+      <p class="note">Random Forest has the lowest ROC-AUC but one of the highest PR-AUC values, which is why PR-AUC is the primary metric.</p>
     </div>
     <div class="card">
       <h3>SMOTE-RF confusion matrix (test set, 56,746 rows)</h3>
@@ -344,125 +513,85 @@ figcaption{font-size:12.5px;color:#4a5263}
       <p class="note">69 of 95 frauds caught with only 6 false alarms. Recall 0.7263, precision 0.9200.</p>
     </div>
   </div>
-  <div class="card">
-    <h3>Temporal stability (70/15/15 chronological benchmark)</h3>
-    <div class="tablewrap"><table>
-      <thead><tr><th>Model</th><th class="r">Validation AP</th><th class="r">Validation ROC-AUC</th><th class="r">AP drop on future data</th><th class="r">AUC drop</th></tr></thead>
-      <tbody>
-        <tr><td>Logistic Regression</td><td class="num">0.7795</td><td class="num">0.9727</td><td class="num">0.4882</td><td class="num">0.0406</td></tr>
-        <tr><td>Random Forest</td><td class="num">0.7815</td><td class="num">0.9314</td><td class="num">0.3570</td><td class="num">0.1028</td></tr>
-        <tr class="best"><td>XGBoost</td><td class="num">0.7782</td><td class="num">0.9859</td><td class="num">0.2926</td><td class="num">0.0057</td></tr>
-      </tbody>
-    </table></div>
-    <p class="note">XGBoost degraded the least on future data. Top SHAP features reported for XGBoost: V14, V4, V12, V10, V11.</p>
-  </div>
 </section>
-
 <section id="hypotheses">
-  <h2><span class="n">08</span>Hypotheses</h2>
+  <h2>Hypotheses</h2>
   <div class="tablewrap"><table>
-    <thead><tr><th>#</th><th>Hypothesis</th><th>Evidence so far</th></tr></thead>
+    <thead><tr><th>#</th><th>Hypothesis</th><th>Evidence</th></tr></thead>
     <tbody>
-      <tr><td class="mono">H1</td><td style="white-space:normal">Leakage-safe temporal features improve PR-AUC / recall over static features.</td><td><span class="pill mid">small gain on ULB (no card IDs)</span></td></tr>
-      <tr><td class="mono">H2</td><td style="white-space:normal">LSTM/GRU add value when valid entity histories exist.</td><td><span class="pill mid">comparable to trees (GRU 0.795)</span></td></tr>
-      <tr><td class="mono">H3</td><td style="white-space:normal">Chronological evaluation shows more degradation than random evaluation.</td><td><span class="pill ok">supported (0.866 vs 0.793)</span></td></tr>
-      <tr><td class="mono">H4</td><td style="white-space:normal">PR-AUC is a better selection signal than accuracy or ROC-AUC.</td><td><span class="pill ok">supported (RF: low ROC, high PR)</span></td></tr>
-      <tr><td class="mono">H5</td><td style="white-space:normal">Best model by AUC is not always best at a practical false-positive limit.</td><td><span class="pill ok">supported</span></td></tr>
-      <tr class="best"><td class="mono">H6</td><td style="white-space:normal"><b>Novelty.</b> Monitoring SHAP explanations of unlabelled traffic decides when to retrain better than input drift or a fixed schedule.</td><td><span class="pill ok">supported on controlled shifts; no false alarms</span></td></tr>
+      <tr><td>H1</td><td style="white-space:normal">Leakage-safe temporal features improve PR-AUC / recall over static features.</td><td><span class="pill mid">small gain on ULB (no card IDs)</span></td></tr>
+      <tr><td>H2</td><td style="white-space:normal">LSTM/GRU add value when valid entity histories exist.</td><td><span class="pill mid">comparable to trees (GRU 0.795)</span></td></tr>
+      <tr><td>H3</td><td style="white-space:normal">Chronological evaluation shows more degradation than random evaluation.</td><td><span class="pill ok">supported (0.866 vs 0.793)</span></td></tr>
+      <tr><td>H4</td><td style="white-space:normal">PR-AUC is a better selection signal than accuracy or ROC-AUC.</td><td><span class="pill ok">supported (RF: low ROC, high PR)</span></td></tr>
+      <tr><td>H5</td><td style="white-space:normal">Best model by AUC is not always best at a practical false-positive limit.</td><td><span class="pill ok">supported</span></td></tr>
+      <tr class="best"><td>H6</td><td style="white-space:normal"><b>Contribution.</b> Monitoring SHAP explanations of unlabelled traffic decides when to retrain better than input drift or a fixed schedule.</td><td><span class="pill ok">supported on controlled shifts; no false alarms</span></td></tr>
     </tbody>
   </table></div>
 </section>
-
-<section id="datasets">
-  <h2><span class="n">09</span>Datasets, models and imbalance handling</h2>
-  <div class="grid2">
-    <div class="card">
-      <h3>Datasets</h3>
-      <div class="tablewrap"><table>
-        <thead><tr><th></th><th>ULB European CC</th><th>IEEE-CIS</th></tr></thead>
-        <tbody>
-          <tr><td>Rows</td><td class="mono">284,807</td><td class="mono">590,540</td></tr>
-          <tr><td>Fraud</td><td class="mono">492 (0.172%)</td><td class="mono">20,663 (~3.5%)</td></tr>
-          <tr><td>Features</td><td>Time, V1–V28 (PCA), Amount</td><td>Card, device, email, address</td></tr>
-          <tr><td>Role</td><td>Primary benchmark</td><td>Behavioral / sequence validation</td></tr>
-        </tbody>
-      </table></div>
-      <p class="note">ULB has no card IDs, so true per-card sequences are built on IEEE-CIS rather than faked from row order.</p>
-    </div>
-    <div class="card">
-      <h3>Models compared</h3>
-      <ul class="note">
-        <li><b>Logistic Regression</b> — simple, interpretable linear baseline.</li>
-        <li><b>Random Forest</b> — strong nonlinear tree ensemble.</li>
-        <li><b>XGBoost / LightGBM</b> — gradient boosting, best for tabular data.</li>
-        <li><b>MLP</b> — neural tabular baseline.</li>
-        <li><b>LSTM / GRU</b> — read the last k transactions of a card as a sequence.</li>
-      </ul>
-      <h3>Imbalance strategies</h3>
-      <ul class="note">
-        <li>Class weighting (used in the prototype)</li>
-        <li>SMOTE, applied inside the training fold only</li>
-        <li>Undersampling</li>
-        <li>Threshold tuning on validation data</li>
-      </ul>
-    </div>
-  </div>
-  <div class="card">
-    <h3>Features</h3>
-    <div class="grid3">
-      <div><b>Static</b><ul class="note"><li>V1–V28</li><li>Amount, log amount</li><li>Hour of day</li></ul></div>
-      <div><b>Temporal</b><ul class="note"><li>Time since previous transaction</li><li>Count in last 1 hour</li><li>Rolling mean / std of amount</li><li>Deviation from recent behavior</li></ul></div>
-      <div><b>Behavioral</b> (needs IDs)<ul class="note"><li>Card-level average amount</li><li>Device / email / address change</li><li>Amount z-score vs history</li></ul></div>
-    </div>
-  </div>
-</section>
-
-<section id="metrics">
-  <h2><span class="n">10</span>Metrics</h2>
-  <div class="tablewrap"><table>
-    <thead><tr><th>Metric</th><th>Formula</th><th>Meaning</th></tr></thead>
-    <tbody>
-      <tr><td>Precision</td><td class="mono">TP / (TP + FP)</td><td>Share of alerts that are really fraud</td></tr>
-      <tr><td>Recall</td><td class="mono">TP / (TP + FN)</td><td>Share of fraud that was caught</td></tr>
-      <tr><td>F1</td><td class="mono">2PR / (P + R)</td><td>Balance of precision and recall</td></tr>
-      <tr><td>PR-AUC</td><td class="mono">area under P–R curve</td><td>Primary metric under imbalance</td></tr>
-      <tr><td>ROC-AUC</td><td class="mono">area under TPR–FPR</td><td>Secondary; can look high even with weak precision</td></tr>
-      <tr><td>FPR</td><td class="mono">FP / (FP + TN)</td><td>Rate of wrongly flagged customers</td></tr>
-    </tbody>
-  </table></div>
-</section>
-
-<section id="limits">
-  <h2><span class="n">11</span>Limitations, ethics and future work</h2>
-  <div class="grid3">
-    <div class="card"><h3>Limitations</h3><ul class="note"><li>ULB features are anonymized PCA components.</li><li>Only 2 days of data, so long-term drift is limited.</li><li>No customer IDs on ULB.</li><li>Benchmarks come from different pipelines.</li><li>SHAP shows attribution, not causality.</li></ul></div>
-    <div class="card"><h3>Ethics</h3><ul class="note"><li>False positives block real customers.</li><li>The model supports a human reviewer and does not decide alone.</li><li>Public anonymized data only.</li></ul></div>
-    <div class="card"><h3>Future work</h3><ul class="note"><li>Temporal graph neural networks</li><li>Transformer sequence models</li><li>Online learning for drift (started: see the novelty)</li><li>Cost-sensitive learning</li><li>Federated, privacy-preserving training</li></ul></div>
-  </div>
-</section>
-
-<section id="viva">
-  <h2><span class="n">12</span>Viva quick answers</h2>
-  <div class="qa">
-    <details><summary>Why not use accuracy?</summary><p>With 0.172% fraud, predicting "legit" for everything gives 99.83% accuracy and catches nothing. PR-AUC, recall and precision focus on the rare fraud class.</p></details>
-    <details><summary>What is data leakage here?</summary><p>Any information from validation/test or from the future reaching training: random splits that train on later transactions, fitting the scaler or SMOTE on all data, or choosing the threshold on the test set.</p></details>
-    <details><summary>Why apply SMOTE only after splitting?</summary><p>SMOTE makes synthetic frauds by interpolating between real ones. If done before the split, synthetic points built from test frauds leak into training and inflate results.</p></details>
-    <details><summary>Why is PR-AUC better than ROC-AUC here?</summary><p>ROC-AUC uses the false positive rate, whose denominator is the huge number of legitimate transactions, so many false alarms still look small. PR-AUC uses precision, which directly shows how many alerts are false.</p></details>
-    <details><summary>Why not just use 0.5 as threshold?</summary><p>Probabilities are skewed under imbalance and the right threshold depends on business cost (review capacity vs missed fraud). We tune it on validation data. The XGBoost benchmark selected 0.266.</p></details>
-    <details><summary>What is SHAP?</summary><p>SHapley Additive exPlanations: game-theory based attribution that splits a prediction into contributions from each feature. Global view: which features matter overall. Local view: why this one transaction was flagged.</p></details>
-    <details><summary>How did you use LSTM/GRU on ULB?</summary><p>Each sample is the window of the last k transactions (k = 5, 10, 20, 50) in time order, and the label is the last one. ULB has no card IDs, so the window is the global stream; at the window chosen on validation (k=5), GRU reached test PR-AUC 0.795 and LSTM 0.787, similar to tree models. Per-card sequences need IEEE-CIS. GRU is a lighter LSTM with fewer gates.</p></details>
-    <details><summary>What is concept drift?</summary><p>Fraud patterns and customer behavior change over time, so a model trained on old data degrades. We test it by evaluating early, middle and late windows separately. Try the drift slider in the prototype.</p></details>
-    <details><summary>What is your contribution if temporal fraud detection already exists?</summary><p>Two things. First, a controlled, reproducible comparison that measures how much temporal and behavioral information adds over strong baselines, under strict leakage-free chronological evaluation, with explainability and false-positive constraints. Second, the novelty: a model that monitors its own SHAP explanations on unlabelled traffic and decides when to retrain, with a delayed-label guard.</p></details>
-    <details><summary>What exactly is new in the novelty?</summary><p>Explanation shift as a measure was proposed by Mougan et al. (2023). We use it as a retraining trigger for fraud detection under delayed labels. We add alarm-then-adapt retraining and a binomial delayed-label guard. We test it against a frozen model, periodic retraining, a PSI trigger and random retrain timing, on real, harmless, harmful and concept-drift streams.</p></details>
-    <details><summary>Why not just retrain every day?</summary><p>On the real stream, retraining every chunk (22 times) gave 0.793 PR-AUC against 0.799 for never retraining, so it cost compute for nothing. On the harmful shift, our 5 well-timed retrains (0.768) matched retraining every chunk (0.766), and 5 retrains at random times reached only 0.745.</p></details>
-    <details><summary>Why is SHAP drift better than input drift (PSI)?</summary><p>PSI reacts to any change in the inputs, including fields the model ignores. After the harmless shift, PSI raised an alarm on every chunk and retrained 5 times; the SHAP monitor stayed quiet. SHAP drift weighs each change by how much the model relies on that feature, and each alarm names the features responsible.</p></details>
-    <details><summary>What can your monitor not see?</summary><p>A change that only affects the rare fraud rows, such as the sign flip: the unlabelled data looks normal, so no label-free monitor can see it. That is why we added the delayed-label guard. It fired 2 chunks after the flip and recovered PR-AUC from 0.001 to 0.618.</p></details>
-  </div>
-</section>
-
-<footer class="note">Tech stack: Python, pandas, NumPy, scikit-learn, imbalanced-learn, XGBoost, LightGBM, PyTorch, SHAP, Matplotlib, Streamlit. References: Dal Pozzolo et al. 2015; Lundberg &amp; Lee 2017; Motie &amp; Raahemi 2024; Tong &amp; Shen 2023; ULB and IEEE-CIS datasets.</footer>
+</div>
 </div>
 
+<div class="wrap tabpanel" role="tabpanel" id="p-viva" aria-labelledby="t-viva" hidden>
+<div class="glass">
+<section id="limits">
+  <h2>Limits, ethics and next steps</h2>
+  <div class="grid3">
+    <div class="card"><h3>Limitations</h3><ul class="note"><li>Only 2 days of data; the real stream does not drift enough to trigger the monitor.</li><li>Shifts in the contribution are injected stress tests.</li><li>Label delay is simulated as one chunk (about 36 minutes); real chargebacks take days.</li><li>ULB features are anonymized PCA components with no customer IDs.</li><li>SHAP shows attribution, not causality.</li></ul></div>
+    <div class="card"><h3>Ethics</h3><ul class="note"><li>False positives block real customers.</li><li>The model supports a human reviewer and does not decide alone.</li><li>Public anonymized data only.</li></ul></div>
+    <div class="card"><h3>Next steps</h3><ul class="note"><li>Test the monitor on a dataset with real drift and card IDs (IEEE-CIS).</li><li>Model realistic label delays of days to weeks.</li><li>Temporal graph and transformer sequence models.</li><li>Cost-sensitive learning.</li></ul></div>
+  </div>
+</section>
+<section id="viva">
+  <h2>Viva quick answers</h2>
+  <div>
+    <details open><summary>Where is the novelty?</summary><p>The models are the baseline. The contribution is a retraining policy: we watch how the model's SHAP explanations change on unlabelled transactions, retrain only when they shift, and add a delayed-label guard for what explanations cannot see. It raised no false alarms where PSI raised 16, and matched retraining every chunk with 5 retrains instead of 22.</p></details>
+    <details><summary>Isn't this just Mougan et al. (2023)?</summary><p>They proposed explanation shift as a detector. We use it as a retraining trigger for fraud under delayed labels, add the alarm-then-adapt window and the binomial label guard, and measure retrains saved and performance recovered against four baselines. We also show its blind spot (the sign flip).</p></details>
+    <details><summary>What does it improve on the real data?</summary><p>Nothing in PR-AUC, because the real 2-day stream does not drift: no monitor fires and the frozen model stays best (0.799). Blind periodic retraining spent 22 retrains and slightly lowered PR-AUC (0.793), while our monitor correctly held still.</p></details>
+    <details><summary>Why trust injected shifts?</summary><p>They are controlled experiments, like unit tests for a monitor: we know exactly when and what changed, so we can measure false alarms and detection delay. Each mimics a real failure: a logging change in unused fields, a unit change in key fields, and fraudsters changing behaviour.</p></details>
+    <details><summary>Why not use accuracy?</summary><p>With 0.172% fraud, predicting "legit" for everything gives 99.83% accuracy and catches nothing. PR-AUC, recall and precision focus on the rare fraud class.</p></details>
+    <details><summary>What is data leakage here?</summary><p>Any information from validation, test or the future reaching training: random splits that train on later transactions, fitting the scaler or SMOTE on all data, or choosing the threshold on the test set.</p></details>
+    <details><summary>Why apply SMOTE only after splitting?</summary><p>SMOTE makes synthetic frauds by interpolating between real ones. If done before the split, synthetic points built from test frauds leak into training and inflate results.</p></details>
+    <details><summary>Why is Random Forest best on test but XGBoost the final model?</summary><p>Models are selected on validation PR-AUC, where XGBoost was best. Choosing by test score would be selection on test, which is leakage.</p></details>
+    <details><summary>What is SHAP?</summary><p>SHapley Additive exPlanations: a game-theory attribution that splits a prediction into one contribution per feature; the contributions add up to the model output. For trees, TreeSHAP computes them exactly and fast.</p></details>
+    <details><summary>How did you use LSTM/GRU on ULB?</summary><p>Each sample is the window of the last k transactions (k = 5, 10, 20, 50) in time order, and the label is the last one. ULB has no card IDs, so the window is the global stream. At the window chosen on validation (k=5), GRU reached test PR-AUC 0.795 and LSTM 0.787, similar to tree models.</p></details>
+    <details><summary>What can your monitor not see?</summary><p>A change that only affects the rare fraud rows, such as the sign flip: the unlabelled data looks normal, so no label-free monitor can see it. That is why we added the delayed-label guard, which recovered PR-AUC from 0.001 to 0.618.</p></details>
+  </div>
+</section>
+</div>
+</div>
+
+<footer class="wrap note">Tech stack: Python, pandas, NumPy, scikit-learn, imbalanced-learn, XGBoost, LightGBM, PyTorch, SHAP, Matplotlib, Streamlit, three.js. References: Dal Pozzolo et al. 2015; Lundberg and Lee 2017; Mougan et al. 2023; ULB and IEEE-CIS datasets.</footer>
+</div>
+
+<script>
+(() => {
+  const tabs = [...document.querySelectorAll(".tab")], bar = document.querySelector(".tabs");
+  const ink = document.createElement("span"); ink.className = "tab-ink"; bar.prepend(ink);
+  const alias = { novelty: "contribution", demo: "prototype", problem: "study", results: "study", benchmarks: "evidence", hypotheses: "evidence", limits: "viva" };
+  const moveInk = (t) => { ink.style.width = t.offsetWidth + "px"; ink.style.transform = `translateX(${t.offsetLeft}px)`; };
+  function show(key, scroll) {
+    const t = tabs.find((b) => b.dataset.tab === key) || tabs[0];
+    tabs.forEach((b) => { const on = b === t; b.setAttribute("aria-selected", on); b.tabIndex = on ? 0 : -1;
+      const p = document.getElementById(b.getAttribute("aria-controls")); p.hidden = !on; if (on) { p.classList.remove("enter"); void p.offsetWidth; p.classList.add("enter"); } });
+    moveInk(t); bar.scrollTo({ left: t.offsetLeft - 24, behavior: "smooth" });
+    try { history.replaceState(null, "", "#" + t.dataset.tab); } catch (e) {}
+    if (scroll) document.querySelector(".tabbar").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+  }
+  tabs.forEach((b, i) => {
+    b.onclick = () => show(b.dataset.tab, scrollY < innerHeight * 0.5 ? false : true);
+    b.onkeydown = (e) => { const d = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0; if (d) { const n = tabs[(i + d + tabs.length) % tabs.length]; n.focus(); show(n.dataset.tab); } };
+  });
+  document.querySelectorAll("[data-go]").forEach((a) => (a.onclick = (e) => { e.preventDefault(); show(a.dataset.go, true); }));
+  const h = location.hash.slice(1);
+  show(alias[h] || h || "contribution", false);
+  addEventListener("resize", () => moveInk(tabs.find((b) => b.getAttribute("aria-selected") === "true")));
+  document.fonts?.ready.then(() => moveInk(tabs.find((b) => b.getAttribute("aria-selected") === "true")));
+})();
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+/*SCENE_JS*/
+</script>
 <script>
 /*ENGINE*/
 </script>
@@ -493,10 +622,10 @@ figcaption{font-size:12.5px;color:#4a5263}
       ];
       staticChrono = exps[1][3]; main = exps[2][3];
       const reading = { A: "optimistic (leaks future)", B: "honest baseline", C: "proposed model", D: "optimistic (leaks future)" };
-      $("expBody").innerHTML = exps.map(([k, f, s, e]) => `<tr class="${k === "C" ? "best" : ""}"><td class="mono">${k}</td><td>${f}</td><td>${s}</td><td class="num">${fmt(e.prauc)}</td><td class="num">${fmt(e.rocauc)}</td><td class="num">${fmt(e.cm.precision)}</td><td class="num">${fmt(e.cm.recall)}</td><td class="num">${fmt(e.cm.f1)}</td><td><span class="pill ${k === "C" ? "ok" : k === "B" ? "mid" : "bad"}">${reading[k]}</span></td></tr>`).join("");
+      $("expBody").innerHTML = exps.map(([k, f, s, e]) => `<tr class="${k === "C" ? "best" : ""}"><td>${k}</td><td>${f}</td><td>${s}</td><td class="num">${fmt(e.prauc)}</td><td class="num">${fmt(e.rocauc)}</td><td class="num">${fmt(e.cm.precision)}</td><td class="num">${fmt(e.cm.recall)}</td><td class="num">${fmt(e.cm.f1)}</td><td><span class="pill ${k === "C" ? "ok" : k === "B" ? "mid" : "bad"}">${reading[k]}</span></td></tr>`).join("");
       const B = exps[1][3], C = exps[2][3], A = exps[0][3];
       $("expNote").textContent = `H1: adding temporal features changes test PR-AUC from ${fmt(B.prauc)} to ${fmt(C.prauc)} (${C.prauc >= B.prauc ? "+" : ""}${fmt((C.prauc - B.prauc) / B.prauc * 100, 0)}%). H3: the same static model scores ${fmt(A.prauc)} on a random split vs ${fmt(B.prauc)} on a chronological split, so random splitting overstates performance when fraud patterns drift.`;
-      $("status").textContent = `${rows.length.toLocaleString()} transactions · ${nF} fraud (${pct(nF / rows.length)}) · train ${main.split.train.length.toLocaleString()} / val ${main.split.val.length.toLocaleString()} / test ${main.split.test.length.toLocaleString()} · tuned threshold ${main.th.toFixed(2)}`;
+      $("status").textContent = `${rows.length.toLocaleString()} transactions, ${nF} fraud (${pct(nF / rows.length)}). Train ${main.split.train.length.toLocaleString()}, validation ${main.split.val.length.toLocaleString()}, test ${main.split.test.length.toLocaleString()}. Tuned threshold ${main.th.toFixed(2)}.`;
       $("th").value = main.th.toFixed(2);
       flagged = main.split.test.map((r, i) => ({ r, s: main.scores[i] })).filter((o) => o.r.y && o.s >= main.th).sort((a, b) => b.s - a.s);
       flagIdx = 0;
@@ -521,21 +650,21 @@ figcaption{font-size:12.5px;color:#4a5263}
     s += `<text x="${L + w / 2}" y="${H - 2}" text-anchor="middle">Recall</text><text x="10" y="${T + h / 2}" text-anchor="middle" transform="rotate(-90 10 ${T + h / 2})">Precision</text>`;
     const path = (pts) => pts.map((p, i) => `${i ? "L" : "M"}${x(p.r).toFixed(1)},${y(p.p).toFixed(1)}`).join("");
     s += `<path d="${path(staticChrono.pr)}" fill="none" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="4 3"/>`;
-    s += `<path d="${path(main.pr)}" fill="none" stroke="var(--accent)" stroke-width="2"/>`;
-    s += `<circle cx="${x(c.recall)}" cy="${y(c.precision)}" r="5" fill="var(--fraud)" stroke="var(--surface)" stroke-width="2"/>`;
+    s += `<path d="${path(main.pr)}" fill="none" stroke="var(--engrave)" stroke-width="2"/>`;
+    s += `<circle cx="${x(c.recall)}" cy="${y(c.precision)}" r="5" fill="var(--fraud)" stroke="var(--solid)" stroke-width="2"/>`;
     $("pr").innerHTML = s;
   }
 
   function bars(vals, names) {
     const m = Math.max(...vals.map(Math.abs), 1e-6);
-    return vals.map((v, i) => { const wd = Math.abs(v) / m * 50; return `<div class="bar"><span class="mono">${names[i]}</span><div class="track"><div class="fill ${v > 0 ? "pos" : "neg"}" style="left:${v > 0 ? 50 : 50 - wd}%;width:${wd}%"></div></div><span class="v">${v >= 0 ? "+" : ""}${v.toFixed(2)}</span></div>`; }).join("");
+    return vals.map((v, i) => { const wd = Math.abs(v) / m * 50; return `<div class="bar"><span>${names[i]}</span><div class="track"><div class="fill ${v > 0 ? "pos" : "neg"}" style="left:${v > 0 ? 50 : 50 - wd}%;width:${wd}%"></div></div><span class="v">${v >= 0 ? "+" : ""}${v.toFixed(2)}</span></div>`; }).join("");
   }
   function drawGlobal() { $("global").innerHTML = bars(main.model.w, Engine.FEATURES); }
   function drawLocal() {
     if (!flagged.length) { $("txInfo").textContent = "No fraud flagged at this threshold."; $("local").innerHTML = ""; return; }
     const o = flagged[flagIdx % flagged.length], r = o.r;
     const hh = Math.floor(r.t / 3600), mm = Math.floor((r.t % 3600) / 60);
-    $("txInfo").textContent = `Txn #${r.id} · card ${r.card} · hour ${hh}:${String(mm).padStart(2, "0")} · amount ${Math.exp(r.x[0]).toFixed(2)} · fraud score ${o.s.toFixed(3)} (${flagIdx % flagged.length + 1}/${flagged.length})`;
+    $("txInfo").textContent = `Transaction ${r.id}, card ${r.card}, at ${hh}:${String(mm).padStart(2, "0")}, amount ${Math.exp(r.x[0]).toFixed(2)}, fraud score ${o.s.toFixed(3)} (${flagIdx % flagged.length + 1} of ${flagged.length})`;
     $("local").innerHTML = bars(main.model.explain(r), Engine.FEATURES);
   }
 

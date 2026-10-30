@@ -3,6 +3,7 @@
     python run_novelty.py            # 3 seeds (~1 h on 4 CPU cores)
     python run_novelty.py --quick    # 1 seed
     python run_novelty.py --analyse-only   # rebuild tables, figures and report from saved CSVs
+    python run_novelty.py --memory   # extension: explanation memory without retraining (~15 min)
 
 The model is trained on the training period (hours 0-33.4). The validation + test periods (hours 33.4-48)
 are then replayed as a stream of 24 chunks; each strategy scores a chunk before seeing its labels and
@@ -126,6 +127,43 @@ def main(quick=False):
     analyse(d, seeds, runtime=(time.time() - T0) / 60)
 
 
+MEMORY = "Explanation memory, no retraining (extension)"
+
+
+def run_memory(quick=False):
+    """Extension: after a SHAP-drift or label-guard alarm, add a kNN score over recently labelled cases in SHAP
+    space instead of retraining. Writes results/novelty_memory.csv and appends a section to reports/NOVELTY.md."""
+    seeds = C.SEEDS[:1] if quick else C.SEEDS
+    d = load_stream(seeds[0])
+    ys, post = d["ys"], np.arange(d["chunks"][ONSET][0], len(d["ys"]))
+    rows = []
+    for scen in SCENARIOS:
+        Xsc = make_stream(scen, d["Xs"], d["order"], d["sd"])
+        for seed in seeds:
+            make = lambda: models.make_model("XGBoost", seed, d["pos_w"])
+            pc, sc, n_rt, rt_s = adaptive.run_stream(make, d["Xh"], d["yh"], Xsc, ys, N_CHUNKS, DELAY,
+                                                     strategy="hybrid", memory=True, retrain=False)
+            rows.append(result_row(scen, MEMORY, seed, pc, sc, ys, post, n_rt, rt_s))
+            log(f"  {scen:8s} seed {seed:4d} memory  PR-AUC after onset {rows[-1]['post_onset_pr_auc']:.4f}")
+    mem = pd.DataFrame(rows)
+    mem.to_csv(C.RESULTS_DIR / "novelty_memory.csv", index=False)
+    g = mem.groupby("scenario", sort=False)
+    t = g[["retrains", "post_onset_pr_auc"]].mean().join(g.post_onset_pr_auc.std(ddof=0).rename("post_onset_pr_auc_std"))
+    comp = pd.read_csv(C.RESULTS_DIR / "novelty_comparison.csv").set_index(["scenario", "strategy"]).post_onset_pr_auc
+    t["frozen"] = [comp[(s, "Frozen (train once)")] for s in t.index]
+    t["proposed_with_retraining"] = [comp[(s, HYBRID)] for s in t.index]
+    report = C.ROOT / "reports" / "NOVELTY.md"
+    text = report.read_text().split("\n## 4. Extension")[0]
+    report.write_text(text + "\n## 4. Extension: explanation memory (no retraining)\n\n"
+                      "After an alarm, each new transaction also gets q = share of confirmed frauds among its 10 nearest "
+                      "labelled neighbours in SHAP space (stream chunks labelled since the alarm), and the score becomes "
+                      "1 - (1 - p)(1 - q). New labels change the score at once, without retraining. "
+                      f"Seeds {list(seeds)}; PR-AUC from the shift onset.\n\n"
+                      + md_table(t.reset_index(), ["scenario", "retrains", "post_onset_pr_auc", "post_onset_pr_auc_std",
+                                                   "frozen", "proposed_with_retraining"]))
+    print(t.to_string())
+
+
 def analyse(d=None, seeds=None, runtime=None):
     """Tables, detector behaviour, alarm attribution, figures and report from results/novelty_{runs,chunks}.csv."""
     runs = pd.read_csv(C.RESULTS_DIR / "novelty_runs.csv")
@@ -223,5 +261,9 @@ if __name__ == "__main__":
     ap.add_argument("--quick", action="store_true")
     ap.add_argument("--analyse-only", action="store_true",
                     help="rebuild tables, figures and report from results/novelty_{runs,chunks}.csv")
+    ap.add_argument("--memory", action="store_true", help="run only the explanation-memory extension")
     args = ap.parse_args()
-    analyse() if args.analyse_only else main(args.quick)
+    if args.memory:
+        run_memory(args.quick)
+    else:
+        analyse() if args.analyse_only else main(args.quick)

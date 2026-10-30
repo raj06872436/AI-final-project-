@@ -93,8 +93,21 @@ def budget_hits(y, p, budget):
     return int(np.asarray(y)[np.argsort(-np.asarray(p))[:k]].sum()), k
 
 
+def memory_score(model, X_mem, y_mem, X_query, k=10) -> np.ndarray:
+    """Explanation memory: share of confirmed frauds among the k nearest labelled cases in SHAP space.
+
+    Neighbours are found among the model's explanations, not its raw inputs, so "similar" means
+    "the model reasons about them the same way". New labels change the score immediately, without retraining.
+    """
+    from sklearn.neighbors import NearestNeighbors
+    nn = NearestNeighbors(n_neighbors=min(k, len(y_mem))).fit(shap_matrix(model, X_mem))
+    _, idx = nn.kneighbors(shap_matrix(model, X_query))
+    return np.asarray(y_mem)[idx].mean(1)
+
+
 def run_stream(make_model, X_hist, y_hist, X_stream, y_stream, n_chunks=24, delay=1, strategy="frozen",
-               period=4, retrain_at=None, budget=0.002, monitor_kw=None, adapt=4, guard_recall=0.5, guard_alpha=0.05):
+               period=4, retrain_at=None, budget=0.002, monitor_kw=None, adapt=4, guard_recall=0.5, guard_alpha=0.05,
+               memory=False, memory_k=10, retrain=True):
     """Prequential simulation of one retraining strategy.
 
     strategy: 'frozen' | 'periodic' (every `period` chunks) | 'scheduled' (at chunk ids in `retrain_at`)
@@ -106,6 +119,9 @@ def run_stream(make_model, X_hist, y_hist, X_stream, y_stream, n_chunks=24, dela
     Drift triggers use alarm-then-adapt: an alarm opens an adaptation window of `adapt` chunks during which the
     model is retrained whenever new labels arrive. A single retrain right after the alarm would not help,
     because with delayed labels the drifted chunk's own labels are not known yet.
+    memory=True adds the explanation memory: from the first alarm on, each transaction's score becomes
+    1 - (1 - p)(1 - q), where q = memory_score() over the stream chunks labelled since that alarm. The memory
+    grows the moment labels arrive, so the system adapts between (or, with retrain=False, without) retrains.
     Returns (per-chunk DataFrame, stream scores, number of retrains, seconds spent retraining).
     """
     chunks = np.array_split(np.arange(len(y_stream)), n_chunks)
@@ -126,11 +142,15 @@ def run_stream(make_model, X_hist, y_hist, X_stream, y_stream, n_chunks=24, dela
         for kind in kinds:
             monitors[kind] = DriftMonitor(kind, chunk_len, **(monitor_kw or {})).fit(model, X_tr)
     refit_monitors()
-    known, retrains, retrain_s, adapt_left = 0, 0, 0.0, 0
+    known, retrains, retrain_s, adapt_left, mem_from = 0, 0, 0.0, 0, None
     rows, scores = [], np.zeros(len(y_stream))
     for t, idx in enumerate(chunks):
         Xc, yc = X_stream[idx], y_stream[idx]
         p = model.predict_proba(Xc)[:, 1]                 # scored before its labels exist
+        mem_idx = (np.concatenate(chunks[mem_from:t - delay]) if mem_from is not None and t - delay > mem_from
+                   else np.array([], dtype=int))           # chunks labelled since the alarm
+        if memory and y_stream[mem_idx].sum() > 0:
+            p = 1 - (1 - p) * (1 - memory_score(model, X_stream[mem_idx], y_stream[mem_idx], Xc, memory_k))
         scores[idx] = p
         dx = monitors["explanation"].score(model, Xc) if "explanation" in monitors else np.nan
         di = monitors["input"].score(model, Xc) if "input" in monitors else np.nan
@@ -153,7 +173,9 @@ def run_stream(make_model, X_hist, y_hist, X_stream, y_stream, n_chunks=24, dela
                  "explanation_drift": lambda: dx > monitors["explanation"].threshold,
                  "hybrid": lambda: dx > monitors["explanation"].threshold or guard}.get(strategy, lambda: False)()
         if alarm:
-            adapt_left = adapt
+            adapt_left = adapt if retrain else 0
+            if mem_from is None:
+                mem_from = max(t - delay, 0)
         fire = {"frozen": False,
                 "periodic": (t + 1) % period == 0,
                 "scheduled": t in set(retrain_at or ())}.get(strategy, adapt_left > 0)

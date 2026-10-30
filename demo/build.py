@@ -1,4 +1,4 @@
-"""Build demo/index.html: inline engine.js, novelty.js and the novelty results from results/novelty_*.csv.
+"""Build demo/index.html: inline scene.js (three.js hero), engine.js, novelty.js and the novelty results from results/novelty_*.csv.
 
     python demo/build.py            # demo/index.html, figures referenced from ../results/figures/
     python demo/build.py --publish  # site/index.html + site/figures/, a self-contained folder to host
@@ -47,6 +47,7 @@ def novelty_data(seed=42):
 def main(publish=False):
     demo = ROOT / "demo"
     page = (demo / "page.src.html").read_text()
+    page = page.replace("/*SCENE_JS*/", (demo / "scene.js").read_text())
     page = page.replace("/*ENGINE*/", (demo / "engine.js").read_text())
     page = page.replace("/*NOVELTY_JS*/", (demo / "novelty.js").read_text().replace("/*NOVELTY_DATA*/", novelty_data()))
     if not publish:
