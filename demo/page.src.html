@@ -324,7 +324,7 @@ figure{border-radius:14px}
           <tr><td>Role</td><td>Primary benchmark</td><td>Future per-card validation</td></tr>
         </tbody>
       </table></div>
-      <p class="note">ULB has no card IDs, so true per-card sequences need IEEE-CIS rather than being faked from row order.</p>
+      <p class="note">ULB: European cardholders, 2 days in September 2013, from the ULB Machine Learning Group and Worldline. Time = seconds since the first transaction; V1–V28 = PCA components the bank used to anonymise the real fields; Amount in euros (mean 88.35, median 22, max 25,691); Class = 1 for fraud. No missing values; 1,081 duplicates removed. No card IDs, so true per-card sequences need IEEE-CIS.</p>
     </div>
     <div class="card">
       <h3>Models compared</h3>
@@ -345,6 +345,36 @@ figure{border-radius:14px}
     </div>
   </div>
 </section>
+<section id="details">
+  <h2>Parameters and layers</h2>
+  <p>Every value is taken from the code (<code>src/fraud/models.py</code> and <code>src/fraud/sequence.py</code>). Scaling and SMOTE are fitted on training data only, inside a pipeline.</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Model</th><th>Key hyperparameters</th></tr></thead>
+    <tbody>
+      <tr><td>Logistic Regression</td><td style="white-space:normal">Standard scaling, L2 penalty C = 1.0, class_weight = balanced, max_iter = 3000</td></tr>
+      <tr><td>SMOTE + Logistic Regression</td><td style="white-space:normal">As above, SMOTE oversamples fraud to 1:1 on training data</td></tr>
+      <tr><td>Random Forest</td><td style="white-space:normal">300 trees, max_features = sqrt (about 5 of 31), min_samples_leaf = 2, no depth limit, class_weight = balanced_subsample</td></tr>
+      <tr><td>SMOTE + Random Forest</td><td style="white-space:normal">300 trees, SMOTE to a 1:10 fraud-to-genuine ratio</td></tr>
+      <tr class="best"><td>XGBoost (final)</td><td style="white-space:normal">500 trees, max_depth = 4, learning_rate = 0.05, subsample = 0.8, colsample_bytree = 0.8, min_child_weight = 2, scale_pos_weight = 497 (genuine ÷ fraud in training)</td></tr>
+      <tr><td>LightGBM</td><td style="white-space:normal">500 trees, learning_rate = 0.03, num_leaves = 31, min_child_samples = 100, reg_lambda = 5, subsample = 0.8, colsample_bytree = 0.8</td></tr>
+      <tr><td>MLP</td><td style="white-space:normal">31 inputs → 64 ReLU → 32 ReLU → 1 sigmoid (2 hidden layers, 4,161 parameters), Adam, alpha = 0.0001, early stopping</td></tr>
+      <tr><td>LSTM / GRU</td><td style="white-space:normal">Adam lr = 0.002, weight decay 0.00001, batch 512, up to 8 epochs, early stopping (patience 3 on validation PR-AUC), gradient clipping 1.0, weighted binary cross-entropy</td></tr>
+    </tbody>
+  </table></div>
+  <h3>LSTM and GRU layers</h3>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Layer</th><th>LSTM</th><th>GRU</th></tr></thead>
+    <tbody>
+      <tr><td>Input</td><td>last 5 transactions × 42 features</td><td>same</td></tr>
+      <tr><td>Recurrent layer</td><td>1 LSTM layer, 64 units (27,648 params)</td><td>1 GRU layer, 64 units (20,736 params)</td></tr>
+      <tr><td>Skip path</td><td>Linear 42 → 64 on the current transaction (2,752)</td><td>same</td></tr>
+      <tr><td>Head</td><td>concat 128 → ReLU → dropout 0.2 → Linear 128 → 1 → sigmoid (129)</td><td>same</td></tr>
+      <tr class="best"><td>Trainable parameters</td><td class="num">30,529</td><td class="num">23,617</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">Random Forest and XGBoost have no layers: Random Forest is 300 full-depth trees that vote; XGBoost is 500 depth-4 trees, each correcting the errors of the ones before.</p>
+</section>
+
 <section id="metrics">
   <h2>Metrics</h2>
   <div class="tablewrap"><table>
