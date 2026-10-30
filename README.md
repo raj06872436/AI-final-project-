@@ -146,6 +146,13 @@ of retrains. Everything uses XGBoost (static + temporal) and 3 seeds.
   (`novelty_drift_attribution.png`). On the real stream, the largest contributor is `hour_sin`, the day/night
   cycle, which is natural and stays below the threshold.
 
+**Extension: explanation memory (no retraining).** After an alarm, each new transaction also gets the share of
+confirmed frauds among its 10 nearest labelled neighbours in SHAP space, combined with the model score as
+1 - (1 - p)(1 - q). New labels change scores at once, without retraining (`python run_novelty.py --memory`).
+Over 3 seeds it lifts post-shift PR-AUC from 0.001 to 0.481 on the flip and from 0.737 to 0.747 on the harmful
+shift, with zero retrains; retraining does better (0.618 and 0.768), so this is a cheap stop-gap between
+retrains, not a replacement. It never fires on the real or harmless streams.
+
 **Why it is novel.** Explanation shift as a drift measure was proposed by Mougan et al. (2023). As far as we know,
 nobody has used it as a **retraining trigger for fraud detection under delayed labels**, or combined it with
 alarm-then-adapt retraining and a statistical delayed-label guard. Nor has it been evaluated against PSI,

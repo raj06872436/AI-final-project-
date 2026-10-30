@@ -69,3 +69,14 @@ An alarm before the onset, or any alarm in the *harmless* scenario, is a false a
 ![timeline](../results/figures/novelty_drift_timeline.png)
 ![tradeoff](../results/figures/novelty_tradeoff.png)
 ![attribution](../results/figures/novelty_drift_attribution.png)
+
+## 4. Extension: explanation memory (no retraining)
+
+After an alarm, each new transaction also gets q = share of confirmed frauds among its 10 nearest labelled neighbours in SHAP space (stream chunks labelled since the alarm), and the score becomes 1 - (1 - p)(1 - q). New labels change the score at once, without retraining. Seeds [42, 7, 2024]; PR-AUC from the shift onset.
+
+| scenario | retrains | post_onset_pr_auc | post_onset_pr_auc_std | frozen | proposed_with_retraining |
+|---|---|---|---|---|---|
+| real | 0.0000 | 0.7988 | 0.0032 | 0.7988 | 0.7988 |
+| harmless | 0.0000 | 0.7963 | 0.0032 | 0.7963 | 0.7963 |
+| harmful | 0.0000 | 0.7473 | 0.0069 | 0.7374 | 0.7684 |
+| flip | 0.0000 | 0.4807 | 0.0031 | 0.0013 | 0.6175 |
