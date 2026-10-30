@@ -34,8 +34,12 @@
     svg.innerHTML = s;
   }
 
-  function render() {
+  function render(live = false) {
     const D = NOV[scen], f = D.frozen, p = D.psi, q = D.prop;
+    // Drive the background scene: warp on a shift, hide fraud on the flip, pulse on a retrain
+    const adapted = q.rt.slice(0, cur).some(Boolean);
+    dispatchEvent(new CustomEvent("stream:chunk", { detail: { scen, cur, onset: ONSET, adapted, retrained: !!q.rt[cur] && live, live } }));
+    if (live && q.rt[cur]) { const l = $("laneProp"); l.classList.remove("flash"); void l.offsetWidth; l.classList.add("flash"); }
     $("cur").value = cur; $("curV").textContent = `${cur} of 23 · ${hours(cur)}`;
     $("scenDesc").textContent = DESC[scen];
     document.querySelectorAll(".segb").forEach((b) => b.setAttribute("aria-selected", b.dataset.s === scen));
@@ -44,11 +48,11 @@
     lane("cFrozen", "rFrozen", f); lane("cPsi", "rPsi", p); lane("cProp", "rProp", q);
     chart($("qChart"), [
       { v: smooth(f.ap), c: css("--muted"), w: 2 },
-      { v: smooth(p.ap), c: css("--accent"), w: 2, dash: "5 3", rt: p.rt },
+      { v: smooth(p.ap), c: css("--psi"), w: 2, dash: "5 3", rt: p.rt },
       { v: smooth(q.ap), c: css("--prop"), w: 2.6, rt: q.rt },
     ], 1);
     chart($("dChart"), [
-      { v: f.pd, c: css("--accent"), w: 2, dash: "5 3" },
+      { v: f.pd, c: css("--psi"), w: 2, dash: "5 3" },
       { v: f.xd, c: css("--prop"), w: 2.6 },
     ], 2, { alarmLine: true });
 
@@ -73,19 +77,19 @@
     $("attrBars").innerHTML = (cur >= ONSET || scen === "real" ? A : []).map(([n, v]) => `<div class="bar"><span class="mono">${n}</span><div class="track"><div class="fill ${fired ? "pos" : ""}" style="left:0;width:${(v / mx) * 100}%"></div></div><span class="v">${v.toFixed(3)}</span></div>`).join("") || `<p class="note">Play the stream past chunk ${ONSET} to see the attribution.</p>`;
   }
 
-  function stop() { clearInterval(timer); timer = null; $("play").textContent = "▶ Play stream"; }
+  function stop() { clearInterval(timer); timer = null; $("play").textContent = "Play stream"; }
   $("play").onclick = () => {
     if (timer) return stop();
     if (cur >= N - 1) cur = -1;
-    $("play").textContent = "❚❚ Pause";
-    const tick = () => { if (cur >= N - 1) return stop(); cur++; render(); };
+    $("play").textContent = "Pause";
+    const tick = () => { if (cur >= N - 1) return stop(); cur++; render(true); };
     tick(); timer = setInterval(tick, matchMedia("(prefers-reduced-motion: reduce)").matches ? 900 : 650);
   };
-  $("stepB").onclick = () => { stop(); cur = Math.min(N - 1, cur + 1); render(); };
+  $("stepB").onclick = () => { stop(); cur = Math.min(N - 1, cur + 1); render(true); };
   $("cur").oninput = (e) => { stop(); cur = +e.target.value; render(); };
   document.querySelectorAll(".segb").forEach((b) => (b.onclick = () => { stop(); scen = b.dataset.s; cur = scen === "real" ? N - 1 : ONSET - 1; render(); }));
-  matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", render);
-  new MutationObserver(render).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+  matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", () => render());
+  new MutationObserver(() => render()).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
 
   const T = NOV.table, scs = ["real", "harmless", "harmful", "flip"];
   const strategies = [...new Set(T.map((r) => r.strategy))];
